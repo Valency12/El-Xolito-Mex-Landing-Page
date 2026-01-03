@@ -1,0 +1,66 @@
+ELEMENTOS A QUITAR O SIMPLIFICAR - EL XOLITO MEX
+==================================================
+
+SECCIONES COMPLETAS A CONSIDERAR QUITAR:
+----------------------------------------
+
+1. SECCIÓN DE INSTAGRAM REELS (Sección "Nosotros" - líneas 315-392)
+   - Razón: Redundante si ya tienes los links sociales en el footer
+   - Solo mantén si los reels muestran contenido único y muy relevante para ventas
+   - Alternativa: Simplificar a 2 reels máximo si decides mantenerla
+
+2. SECCIÓN "HISTORIA" DUPLICADA (Sección "historia" - líneas 241-259)
+   - Razón: Hay dos secciones que cuentan la historia (la otra es "Taller")
+   - Conflicto: Una dice que María Elena empezó en 2018, la otra habla de "más de dos décadas"
+   - Alternativa: Fusionar en una sola sección coherente o mantener solo "Taller" si tiene más impacto visual
+
+ELEMENTOS A SIMPLIFICAR:
+------------------------
+
+3. TEXTO DEL TALLER (Sección "taller-collage" - líneas 268-284)
+   - Razón: El párrafo es muy largo y tiene demasiadas palabras en cursiva/negrita
+   - Puede abrumar al lector y reducir el tiempo en la página
+   - Acción: Reducir a 2-3 párrafos más cortos, menos énfasis visual
+
+4. SECCIÓN DE TESTIMONIOS
+   - Evaluar si los testimonios son reales o ficticios
+   - Si son ficticios, considera quitarlos (puede ser penalizado por Google)
+   - Si decides mantenerlos, asegúrate de que sean verificables
+
+ELEMENTOS DEL FOOTER A REVISAR:
+-------------------------------
+
+5. LINK "BLOG" (Footer - línea 451)
+   - Si el blog no existe o está vacío, eliminar el link
+   - Los links rotos o vacíos reducen la confianza
+
+6. LINKS SIN DESTINO (#)
+   - "Preguntas frecuentes" (línea 458) - apunta a #
+   - "Envíos y devoluciones" (línea 459) - apunta a #
+   - "Cuidado de joyas" (línea 460) - apunta a #
+   - "Garantía" (línea 461) - apunta a #
+   - "Términos y condiciones" (línea 469) - apunta a #
+   - "Política de privacidad" (línea 470) - apunta a #
+   - Acción: Crear las páginas correspondientes O eliminar los links hasta que existan
+
+ELEMENTOS DE NAVEGACIÓN:
+------------------------
+
+7. BOTÓN "Inicio" EN EL NAV (línea 33)
+   - Redundante si ya estás en la página principal
+   - Solo tiene sentido si lo usas para hacer scroll al top, pero el logo ya puede hacer eso
+
+PRIORIDAD ALTA PARA QUITAR:
+---------------------------
+- Links del footer que apuntan a # (si no tienes esas páginas)
+- Link de Blog si no existe
+
+PRIORIDAD MEDIA:
+----------------
+- Sección de Instagram Reels (evaluar si realmente agrega valor)
+- Botón "Inicio" del nav (menor impacto)
+
+PRIORIDAD BAJA (evaluar caso por caso):
+----------------------------------------
+- Testimonios (solo si son ficticios)
+
