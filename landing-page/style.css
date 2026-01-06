@@ -112,7 +112,12 @@ img{ display:block; max-width:100%; height:auto; }
 .brand{ display:inline-flex; align-items:center; gap:.6rem; color:inherit; text-decoration:none; font-weight:700; }
 .brand h5{ margin:0; padding:1rem; }
 .brand.small .brand-logo{ width:28px; height:28px; }
-.brand-logo{ width:34px; height:34px; }
+.brand-logo{ 
+	width: auto; 
+	height: clamp(40px, 8vw, 50px); 
+	max-width: 150px;
+	object-fit: contain;
+}
 .brand-text{ letter-spacing:.4px; }
 
 .nav-toggle{ display:none; background:none; border:0; font-size:1.5rem; }
@@ -123,10 +128,10 @@ img{ display:block; max-width:100%; height:auto; }
 
 
 .hero{ 
-  min-height: 100vh;
+  min-height: 120vh;
   display: flex;
   align-items: center;
-  padding: 2rem 0;
+  padding: clamp(3rem, 6vw, 5rem) 0;
   background-image: url('assets/fondoh.png');
   background-size: cover;
   background-position: center;
@@ -156,28 +161,357 @@ img{ display:block; max-width:100%; height:auto; }
 }
 @media (max-width: 980px){
 	.hero-logo{ max-width: 250px; }
-	.hero{ background-attachment: scroll; }
+	.hero{ 
+		background-attachment: scroll; 
+		align-items: flex-start;
+		padding-top: clamp(2rem, 4vw, 3rem);
+		padding-bottom: clamp(3rem, 6vw, 5rem);
+		min-height: auto;
+	}
+	.hero-grid {
+		grid-template-columns: 1fr;
+		gap: clamp(2rem, 4vw, 3rem);
+	}
+	.hero-media {
+		display: block;
+		width: 100%;
+		margin-top: clamp(1.5rem, 3vw, 2.5rem);
+	}
 	.hero-copy .display{ margin-left: 1rem; font-size: clamp(1.5rem, 1.2rem + 2vw, 2.5rem); }
 	.hero-copy .lead{ font-size: clamp(0.95rem, 0.875rem + 0.5vw, 1.15rem); }
 }
 @media (max-width: 720px){
-	.hero-logo{ max-width: 200px; }
-	.hero-copy .display{ margin-left: 0.75rem; font-size: clamp(1.2rem, 1rem + 1.5vw, 2rem); }
-	.hero-copy .lead{ font-size: clamp(0.9rem, 0.85rem + 0.4vw, 1.1rem); }
+	/* Ocultar solo la barra azul (border-mex) en móvil */
+	.site-header .border-mex {
+		display: none;
+	}
+	
+	/* Ajustar header para móvil - negro sólido */
+	.site-header {
+		background: #000000 !important;
+		backdrop-filter: none;
+	}
+	
+	/* Reorganizar header: hamburguesa izquierda, logo centro, iconos derecha */
+	.header-inner {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: 1rem;
+	}
+	
+	/* Menú hamburguesa a la izquierda */
+	.nav {
+		order: 1;
+		display: flex;
+		justify-content: flex-start;
+	}
+	.nav-toggle {
+		display: inline-block;
+		color: var(--blanco);
+		font-size: 1.5rem;
+		cursor: pointer;
+	}
+	
+	/* Logo centrado */
+	.brand {
+		order: 2;
+		justify-self: center;
+		margin: 0 auto;
+	}
+	.brand h5 {
+		display: none;
+	}
+	.brand-logo {
+		height: clamp(35px, 7vw, 45px);
+		max-width: clamp(120px, 25vw, 150px);
+	}
+	
+	/* Iconos a la derecha */
+	.header-actions {
+		order: 3;
+		justify-self: flex-end;
+	}
+	
+	/* Mostrar contenido del hero - Diseño minimalista */
+	.hero-copy {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		text-align: center;
+		width: 100%;
+		padding: 0 clamp(1rem, 3vw, 2rem);
+		min-height: 100%;
+	}
+	.hero-media {
+		display: none;
+	}
+	
+	/* Ocultar logo del hero (ya está en navbar) */
+	.hero-logo {
+		display: none;
+	}
+	
+	/* Contenedor del contenido (título y texto) */
+	.hero-copy > *:not(.hero-cta) {
+		flex-shrink: 0;
+	}
+	
+	/* Título grande y elegante - elemento principal */
+	.hero-copy .display {
+		margin: 0 auto clamp(1.5rem, 3vw, 2.5rem) auto;
+		white-space: normal;
+		font-size: clamp(2.5rem, 6vw, 4rem);
+		text-align: center;
+		line-height: 1.15;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+	}
+	
+	/* Texto más pequeño y sutil */
+	.hero-copy .lead {
+		font-size: clamp(0.95rem, 1.8vw, 1.15rem);
+		margin: 0 auto;
+		max-width: clamp(280px, 75vw, 480px);
+		text-align: center;
+		line-height: 1.7;
+		opacity: 0.9;
+		font-weight: 300;
+	}
+	
+	/* Botón al final del hero */
+	.hero-copy .hero-cta {
+		display: flex;
+		justify-content: center;
+		gap: 0;
+		flex-wrap: wrap;
+		margin-top: auto;
+		margin-bottom: 20px;
+		padding-bottom: 0;
+	}
+	.hero-copy .hero-cta .btn-outline {
+		display: none;
+	}
+	.hero-copy .btn {
+		padding: clamp(0.7rem, 1.5vw, 0.9rem) clamp(1.5rem, 3vw, 2.25rem);
+		font-size: clamp(0.85rem, 1.7vw, 1rem);
+		font-weight: 500;
+		letter-spacing: 0.5px;
+	}
+	
+	/* Expandir hero verticalmente - contenido más arriba */
+	.hero{ 
+		background-image: url('assets/fondoherodos.png');
+		align-items: stretch;
+		padding-top: clamp(1rem, 3vw, 2.5rem);
+		padding-bottom: 0;
+		min-height: clamp(80vh, 90vh, 100vh);
+	}
+	.hero .container {
+		padding-top: clamp(0.75rem, 2.5vw, 2rem);
+		padding-bottom: 0;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+	.hero-grid {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+	
+	/* Mostrar ofertas directamente en el hero */
+	.offers {
+		padding: clamp(1rem, 3vw, 2rem) 0;
+		background: transparent !important;
+		margin-top: clamp(-1rem, -2vw, -0.5rem);
+	}
+	.offers .container {
+		padding: 0 1rem;
+	}
+	.offers .section-title {
+		display: none;
+	}
+	.offers-grid {
+		grid-template-columns: 1fr;
+		gap: clamp(1rem, 3vw, 1.5rem);
+		margin-top: 0;
+	}
 }
 @media (max-width: 480px){
-	.hero-copy{ text-align: center; }
-	.hero-logo{ max-width: clamp(180px, 35vw, 220px); margin: 0 auto; display: block; }
-	.hero-copy .display{ margin-left: 0; white-space: normal; font-size: clamp(1.5rem, 1.3rem + 1.2vw, 2rem); }
-	.hero-copy .lead{ font-size: clamp(0.875rem, 0.8rem + 0.4vw, 1rem); }
-	.hero-copy .hero-cta{ justify-content: center; gap: clamp(0.5rem, 0.4rem + 0.3vw, 0.6rem); }
-	.hero-copy .btn{ 
-		padding: clamp(0.6rem, 0.55rem + 0.3vw, 0.7rem) clamp(0.9rem, 0.85rem + 0.5vw, 1.1rem);
-		font-size: clamp(0.8rem, 0.75rem + 0.3vw, 0.9rem);
+	/* Ocultar solo la barra azul (border-mex) en móvil */
+	.site-header .border-mex {
+		display: none;
+	}
+	
+	/* Ajustar header para móvil - negro sólido */
+	.site-header {
+		background: #000000 !important;
+		backdrop-filter: none;
+	}
+	
+	/* Reorganizar header: hamburguesa izquierda, logo centro, iconos derecha */
+	.header-inner {
+		display: grid;
+		grid-template-columns: auto 1fr auto;
+		align-items: center;
+		gap: clamp(0.5rem, 1.5vw, 1rem);
+	}
+	
+	/* Menú hamburguesa a la izquierda */
+	.nav {
+		order: 1;
+		display: flex;
+		justify-content: flex-start;
+	}
+	.nav-toggle {
+		display: inline-block;
+		color: var(--blanco);
+		font-size: clamp(1.25rem, 3vw, 1.5rem);
+		cursor: pointer;
+	}
+	
+	/* Logo centrado */
+	.brand {
+		order: 2;
+		justify-self: center;
+		margin: 0 auto;
+	}
+	.brand h5 {
+		display: none;
+	}
+	.brand-logo {
+		height: clamp(30px, 6vw, 40px);
+		max-width: clamp(100px, 22vw, 130px);
+	}
+	
+	/* Iconos a la derecha */
+	.header-actions {
+		order: 3;
+		justify-self: flex-end;
+		gap: clamp(0.25rem, 1vw, 0.5rem);
+	}
+	
+	/* Mostrar contenido del hero - Diseño minimalista */
+	.hero-copy {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		text-align: center;
+		width: 100%;
+		padding: 0 clamp(0.75rem, 2.5vw, 1.5rem);
+		min-height: 100%;
+	}
+	.hero-media {
+		display: none;
+	}
+	
+	/* Ocultar logo del hero (ya está en navbar) */
+	.hero-logo {
+		display: none;
+	}
+	
+	/* Contenedor del contenido (título y texto) */
+	.hero-copy > *:not(.hero-cta) {
+		flex-shrink: 0;
+	}
+	
+	/* Título grande y elegante - elemento principal */
+	.hero-copy .display {
+		margin: 0 auto clamp(1.25rem, 2.5vw, 2rem) auto;
+		white-space: normal;
+		font-size: clamp(2rem, 5vw, 3.2rem);
+		text-align: center;
+		line-height: 1.15;
+		font-weight: 600;
+		letter-spacing: -0.02em;
+	}
+	
+	/* Texto más pequeño y sutil */
+	.hero-copy .lead {
+		font-size: clamp(0.875rem, 1.6vw, 1.05rem);
+		margin: 0 auto;
+		max-width: clamp(260px, 80vw, 450px);
+		text-align: center;
+		line-height: 1.7;
+		opacity: 0.9;
+		font-weight: 300;
+	}
+	
+	/* Botón al final del hero */
+	.hero-copy .hero-cta {
+		display: flex;
+		justify-content: center;
+		gap: 0;
+		flex-wrap: wrap;
+		margin-top: auto;
+		margin-bottom: 20px;
+		padding-bottom: 0;
+	}
+	.hero-copy .hero-cta .btn-outline {
+		display: none;
+	}
+	.hero-copy .btn {
+		padding: clamp(0.65rem, 1.3vw, 0.8rem) clamp(1.25rem, 2.5vw, 1.75rem);
+		font-size: clamp(0.8rem, 1.5vw, 0.95rem);
+		font-weight: 500;
+		letter-spacing: 0.5px;
+	}
+	
+	/* Expandir hero verticalmente - contenido más arriba */
+	.hero{ 
+		background-image: url('assets/fondoherodos.png');
+		align-items: stretch;
+		padding-top: clamp(0.75rem, 2.5vw, 2rem);
+		padding-bottom: 0;
+		min-height: clamp(75vh, 85vh, 95vh);
+	}
+	.hero .container {
+		padding-top: clamp(0.5rem, 2vw, 1.5rem);
+		padding-bottom: 0;
+		display: flex;
+		flex-direction: column;
+		height: 100%;
+	}
+	.hero-grid {
+		display: flex;
+		flex-direction: column;
+		flex: 1;
+	}
+	
+	/* Mostrar ofertas directamente en el hero */
+	.offers {
+		padding: clamp(0.75rem, 2.5vw, 1.5rem) 0;
+		background: transparent !important;
+		margin-top: clamp(-0.75rem, -1.5vw, -0.5rem);
+	}
+	.offers .container {
+		padding: 0 1rem;
+	}
+	.offers .section-title {
+		display: none;
+	}
+	.offers-grid {
+		grid-template-columns: 1fr;
+		gap: clamp(0.75rem, 2.5vw, 1.25rem);
+		margin-top: 0;
+	}
+	.offer-card {
+		padding: clamp(1rem, 2.5vw, 1.25rem);
 	}
 }
 .hero-copy .hero-cta{ display:flex; gap:.8rem; flex-wrap:wrap; margin-top:1rem; }
-.hero-media{ display:none; }
+.hero-media{ 
+	display: none; 
+}
+.hero-image {
+	width: 100%;
+	height: auto;
+	max-width: 600px;
+	object-fit: contain;
+	margin: 0 auto;
+	display: block;
+}
 .hero-badge{ position:absolute; right:10%; bottom:10%; background:var(--verde); color:#fff; padding:.6rem .9rem; border-radius:999px; font-weight:700; letter-spacing:.5px; box-shadow:var(--shadow); }
 
 .features{ padding:3rem 0; }
@@ -2599,9 +2933,7 @@ img{ display:block; max-width:100%; height:auto; }
         }
 
         .brand-logo {
-            width: 50px;
-            height: 50px;
-            background-color: #fff;
+            height: 55px;
             border-radius: 8px;
             display: flex;
             align-items: center;
