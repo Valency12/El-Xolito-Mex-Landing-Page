@@ -65,7 +65,7 @@
           <p class="lead">Piezas únicas inspiradas en texturas y colores de México. Hechas a mano, para acompañarte
             todos los días.</p>
           <div class="hero-cta">
-            <a href="tienda.html" class="btn btn-hero">Ver tienda completa</a>
+            <a href="tienda.html" class="btn btn-hero"><strong>Ver tienda completa</strong></a>
             <a href="#destacados" class="btn btn-outline" onclick="event.preventDefault(); document.querySelector('#destacados').scrollIntoView({ behavior: 'smooth' });">Ver destacados</a>
           </div>
         </div>
@@ -185,7 +185,7 @@
 
     <section id="testimonios" class="testimonials">
       <div class="container">
-        <h2 class="section-title">Lo que dicen nuestros clientes</h2>
+        <h2 class="section-title">¡Lo dicen ellos!</h2>
         <div class="testimonials-grid">
           <div class="testimonial">
             <div class="testimonial-product-image">
@@ -677,6 +677,196 @@
         initCarouselFallback();
       }
     }, 1500);
+    
+    // Carrusel automático de ofertas en móvil
+    let offersAnimationId = null;
+    
+    function initOffersCarousel() {
+      const offersGrid = document.querySelector('.offers-grid');
+      if (!offersGrid) return;
+      
+      // Limpiar animación anterior
+      if (offersAnimationId) {
+        cancelAnimationFrame(offersAnimationId);
+        offersAnimationId = null;
+      }
+      offersGrid.style.transform = '';
+      
+      // Solo aplicar en móvil
+      if (window.innerWidth > 720) {
+        // Limpiar clones si existen
+        const clones = offersGrid.querySelectorAll('.offer-card-clone');
+        clones.forEach(clone => clone.remove());
+        return;
+      }
+      
+      const cards = offersGrid.querySelectorAll('.offer-card:not(.offer-card-clone)');
+      if (cards.length === 0) return;
+      
+      // Limpiar clones existentes
+      const existingClones = offersGrid.querySelectorAll('.offer-card-clone');
+      existingClones.forEach(clone => clone.remove());
+      
+      // Duplicar las tarjetas para scroll infinito
+      cards.forEach(card => {
+        const clone = card.cloneNode(true);
+        clone.classList.add('offer-card-clone');
+        offersGrid.appendChild(clone);
+      });
+      
+      // Calcular dimensiones
+      const cardWidth = cards[0].offsetWidth;
+      const gap = parseFloat(getComputedStyle(offersGrid).gap) || 16;
+      const scrollWidth = cardWidth + gap;
+      const totalWidth = scrollWidth * cards.length;
+      
+      // Hacer scroll automático
+      let scrollPosition = 0;
+      const scrollSpeed = 0.3;
+      let isPaused = false;
+      
+      function autoScroll() {
+        if (isPaused) {
+          offersAnimationId = requestAnimationFrame(autoScroll);
+          return;
+        }
+        
+        scrollPosition += scrollSpeed;
+        
+        if (scrollPosition >= totalWidth) {
+          scrollPosition = 0;
+        }
+        
+        offersGrid.style.transform = `translateX(-${scrollPosition}px)`;
+        offersAnimationId = requestAnimationFrame(autoScroll);
+      }
+      
+      // Pausar al hacer hover (solo en dispositivos con hover)
+      if (window.matchMedia('(hover: hover)').matches) {
+        offersGrid.addEventListener('mouseenter', () => {
+          isPaused = true;
+        }, { once: false });
+        
+        offersGrid.addEventListener('mouseleave', () => {
+          isPaused = false;
+        }, { once: false });
+      }
+      
+      // Iniciar animación
+      autoScroll();
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initOffersCarousel, 100);
+      });
+    } else {
+      setTimeout(initOffersCarousel, 100);
+    }
+    
+    // Reinicializar si cambia el tamaño de la ventana
+    let resizeTimer;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(initOffersCarousel, 250);
+    });
+    
+    // Carrusel automático de reels en móvil
+    let reelsAnimationId = null;
+    
+    function initReelsCarousel() {
+      const reelsGrid = document.querySelector('.instagram-reels-grid');
+      if (!reelsGrid) return;
+      
+      // Limpiar animación anterior
+      if (reelsAnimationId) {
+        cancelAnimationFrame(reelsAnimationId);
+        reelsAnimationId = null;
+      }
+      reelsGrid.style.transform = '';
+      
+      // Solo aplicar en móvil
+      if (window.innerWidth > 720) {
+        // Limpiar clones si existen
+        const clones = reelsGrid.querySelectorAll('.reel-container-clone');
+        clones.forEach(clone => clone.remove());
+        return;
+      }
+      
+      const reels = reelsGrid.querySelectorAll('.reel-container:not(.reel-container-clone)');
+      if (reels.length === 0) return;
+      
+      // Limpiar clones existentes
+      const existingClones = reelsGrid.querySelectorAll('.reel-container-clone');
+      existingClones.forEach(clone => clone.remove());
+      
+      // Duplicar los reels para scroll infinito
+      reels.forEach(reel => {
+        const clone = reel.cloneNode(true);
+        clone.classList.add('reel-container-clone');
+        reelsGrid.appendChild(clone);
+      });
+      
+      // Calcular dimensiones
+      const reelWidth = reels[0].offsetWidth;
+      const gap = parseFloat(getComputedStyle(reelsGrid).gap) || 16;
+      const scrollWidth = reelWidth + gap;
+      const totalWidth = scrollWidth * reels.length;
+      
+      // Hacer scroll automático
+      let scrollPosition = 0;
+      const scrollSpeed = 0.3;
+      let isPaused = false;
+      
+      function autoScroll() {
+        if (isPaused) {
+          reelsAnimationId = requestAnimationFrame(autoScroll);
+          return;
+        }
+        
+        scrollPosition += scrollSpeed;
+        
+        if (scrollPosition >= totalWidth) {
+          scrollPosition = 0;
+        }
+        
+        reelsGrid.style.transform = `translateX(-${scrollPosition}px)`;
+        reelsAnimationId = requestAnimationFrame(autoScroll);
+      }
+      
+      // Pausar al hacer hover (solo en dispositivos con hover)
+      if (window.matchMedia('(hover: hover)').matches) {
+        reelsGrid.addEventListener('mouseenter', () => {
+          isPaused = true;
+        }, { once: false });
+        
+        reelsGrid.addEventListener('mouseleave', () => {
+          isPaused = false;
+        }, { once: false });
+      }
+      
+      // Iniciar animación
+      autoScroll();
+    }
+    
+    // Inicializar cuando el DOM esté listo
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => {
+        setTimeout(initReelsCarousel, 100);
+      });
+    } else {
+      setTimeout(initReelsCarousel, 100);
+    }
+    
+    // Reinicializar si cambia el tamaño de la ventana
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        initOffersCarousel();
+        initReelsCarousel();
+      }, 250);
+    });
   </script>
 </body>
 
