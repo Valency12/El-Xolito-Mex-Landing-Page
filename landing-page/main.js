@@ -1463,16 +1463,25 @@ function setupYear() {
 }
 
 function setupHashNavigation() {
-	if (location.hash) {
-		const target = document.querySelector(location.hash);
-		if (target) { target.scrollIntoView({ behavior: 'smooth' }); }
+	// Solo hacer scroll automático si hay un hash y no es el footer
+	if (location.hash && location.hash !== '#contacto' && location.hash !== '#footer') {
+		setTimeout(() => {
+			const target = document.querySelector(location.hash);
+			if (target && !target.closest('footer')) {
+				target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			}
+		}, 100);
 	}
 	document.querySelectorAll('a[href^="#"]').forEach(link => {
 		link.addEventListener('click', (e) => {
 			const id = link.getAttribute('href');
 			if (!id || id === '#') return;
 			const el = document.querySelector(id);
-			if (el) { e.preventDefault(); el.scrollIntoView({ behavior: 'smooth', block: 'start' }); history.pushState(null, '', id); }
+			if (el && !el.closest('footer')) {
+				e.preventDefault();
+				el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+				history.pushState(null, '', id);
+			}
 		});
 	});
 }
