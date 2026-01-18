@@ -1275,15 +1275,23 @@ img{ display:block; max-width:100%; height:auto; }
   background:#000 !important ;  border-radius:var(--radius); padding:1.5rem; text-align:center; 
   box-shadow:var(--shadow); position:relative; overflow:hidden;
   opacity: 1;
-  animation: fadeInScale 2s ease-out;
+  animation: fadeInScale 1.2s ease-out;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
-.offer-card:nth-child(1) { animation-delay: 0.2s; }
-.offer-card:nth-child(2) { animation-delay: 0.4s; }
-.offer-card:nth-child(3) { animation-delay: 0.6s; }
+.offer-card:nth-child(1) { animation-delay: 0.1s; }
+.offer-card:nth-child(2) { animation-delay: 0.2s; }
+.offer-card:nth-child(3) { animation-delay: 0.3s; }
+.offer-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.15);
+}
 .offer-card img {
   opacity: 1;
-  animation: fadeIn 1.8s ease-out 0.3s;
   transition: transform 0.5s ease;
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
 }
 .offer-card:hover img {
   transform: scale(1.05);
@@ -1291,9 +1299,8 @@ img{ display:block; max-width:100%; height:auto; }
 .offer-badge{ 
   position:absolute; top:1rem; right:1rem; background:var(--rojo); color:#fff; 
   padding:.3rem .6rem; border-radius:999px; font-size:.8rem; font-weight:700;
+  z-index: 10;
   opacity: 1;
-  animation: fadeInScale 1.5s ease-out 0.5s;
-  transform-origin: center;
 }
 .offer-badge{ 
   position:absolute; top:1rem; right:1rem; background:var(--rojo); color:#fff; 

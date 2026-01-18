@@ -1466,7 +1466,7 @@ function setupHashNavigation() {
 	// Solo hacer scroll automático si hay un hash y no es el footer
 	if (location.hash && location.hash !== '#contacto' && location.hash !== '#footer') {
 		setTimeout(() => {
-			const target = document.querySelector(location.hash);
+		const target = document.querySelector(location.hash);
 			if (target && !target.closest('footer')) {
 				target.scrollIntoView({ behavior: 'smooth', block: 'start' });
 			}
