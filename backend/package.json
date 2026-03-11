@@ -1,0 +1,22 @@
+{
+  "name": "el-xolito-mex-backend",
+  "version": "1.0.0",
+  "description": "API para tienda de joyería El Xolito Mex",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "db:init": "node scripts/init-db.js"
+  },
+  "keywords": ["jewelry", "api", "sqlite"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^11.6.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "jsonwebtoken": "^9.0.2"
+  }
+}
