@@ -1,25 +1,27 @@
 /**
- * Rutas de categorías (derivadas de los productos).
+ * Rutas de categorías (lista canónica: Anillos, Brazaletes, Collares, Aretes, Broqueles, Pulseras, Dijes, Conjuntos).
  * Base: /api/categories
  */
 const express = require('express');
 const router = express.Router();
 const db = require('../db');
-const { slugify } = require('../lib/slug');
 
-// GET /api/categories — listar categorías únicas con slug y cantidad
+// GET /api/categories — listar categorías canónicas con cantidad de productos activos
 router.get('/', (req, res) => {
   try {
     const rows = db
       .prepare(
-        `SELECT categoria, COUNT(*) as total FROM productos WHERE activo = 1 AND TRIM(COALESCE(categoria, '')) != '' GROUP BY TRIM(categoria) ORDER BY categoria ASC`
+        `SELECT c.id, c.nombre, c.slug, c.orden,
+                (SELECT COUNT(*) FROM productos p WHERE p.activo = 1 AND TRIM(COALESCE(p.categoria, '')) = c.nombre) AS total
+         FROM categorias c
+         ORDER BY c.orden ASC, c.nombre ASC`
       )
       .all();
     const categories = rows.map((r) => ({
-      id: slugify(r.categoria),
-      nombre: r.categoria.trim(),
-      slug: slugify(r.categoria),
-      total: r.total
+      id: r.id,
+      nombre: r.nombre,
+      slug: r.slug,
+      total: r.total || 0
     }));
     return res.json({
       success: true,
@@ -41,25 +43,26 @@ router.get('/', (req, res) => {
 router.get('/:slug', (req, res) => {
   try {
     const slug = (req.params.slug || '').trim().toLowerCase();
-    const rows = db.prepare('SELECT DISTINCT categoria FROM productos WHERE activo = 1').all();
-    const cat = rows.find((r) => slugify((r.categoria || '').trim()) === slug);
+    const cat = db.prepare('SELECT id, nombre, slug, orden FROM categorias WHERE slug = ?').get(slug);
     if (!cat) {
       return res.status(404).json({
         success: false,
         message: 'Categoría no encontrada'
       });
     }
-    const total = db
-      .prepare('SELECT COUNT(*) as n FROM productos WHERE activo = 1 AND TRIM(COALESCE(categoria, "")) = ?')
-      .get(cat.categoria.trim());
+    const totalRow = db
+      .prepare(
+        'SELECT COUNT(*) AS n FROM productos WHERE activo = 1 AND TRIM(COALESCE(categoria, "")) = ?'
+      )
+      .get(cat.nombre);
     return res.json({
       success: true,
       data: {
         category: {
-          id: slug,
-          nombre: cat.categoria.trim(),
-          slug: slug,
-          total: total ? total.n : 0
+          id: cat.id,
+          nombre: cat.nombre,
+          slug: cat.slug,
+          total: totalRow ? totalRow.n : 0
         }
       }
     });

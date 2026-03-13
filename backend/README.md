@@ -7,17 +7,20 @@ API en Node.js + Express + SQLite para la tienda virtual ligada a la landing. Si
 ## Flujo de lógica (joyería)
 
 1. **Catálogo**  
-   Los productos viven en la tabla `productos` (nombre, descripción, precio, imagen_path, material, stock, categoría, activo, destacado). La tienda y la landing consumen estos datos vía API.
+   Los productos viven en la tabla `productos` (nombre, descripción, precio, imagen_path, material, stock, categoría, activo, destacado). La categoría debe coincidir con la **lista canónica** (tabla `categorias`): **Anillos, Brazaletes, Collares, Aretes, Broqueles, Pulseras, Dijes, Conjuntos.**
 
 2. **Usuarios**  
    Los clientes que se registran o inician sesión se guardan en `usuarios` (email, contraseña hasheada, nombre, teléfono). El login devuelve JWT (access + refresh) para llamadas autenticadas.
 
-3. **Próximos pasos (sin implementar aún)**  
-   - Carrito: puede ser solo en el front (localStorage) o persistirse en backend.  
-   - Pedidos: tabla `pedidos` + `pedido_items` cuando definan checkout.  
-   - Cuando te pasen la lista de inventario (Excel/tabla), se importa a `productos` y las imágenes se suben a la carpeta de assets; la API ya devuelve lo que haya en la BD.
+3. **Carrito (backend)**  
+   Tabla `carrito_items` (usuario_id, producto_id, cantidad). El usuario debe estar autenticado para agregar, ver, actualizar o vaciar el carrito. Endpoints bajo `/api/cart`.
 
-Resumen: **primero backend (API + BD) → luego frontend de tienda consume la API → después se cargan datos reales de inventario.**
+4. **Checkout y pedidos**  
+   Tablas `pedidos` (usuario, total, estado, direccion_entrega, contacto) y `pedido_items` (pedido_id, producto_id, cantidad, precio_unitario). `POST /api/orders` crea el pedido desde el carrito actual, vacía el carrito y devuelve `pedido_id` y total (estado inicial: `pendiente_pago`). Luego se puede integrar pasarela de pago.
+
+5. **Próximos pasos**  
+   - Integrar API de pago (Stripe, Conekta, Mercado Pago) y actualizar estado del pedido a `pagado` tras el pago.  
+   - Cuando te pasen la lista de inventario (Excel/tabla), importar a `productos` con categorías de la lista canónica y subir imágenes a assets.
 
 ---
 
@@ -56,7 +59,7 @@ npm run db:init
 ```
 
 - Borra `database/el_xolito_mex.db` si existe.
-- Ejecuta `database/schema.sql` (tablas `productos` y `usuarios` + INSERTs de ejemplo).
+- Ejecuta `database/schema.sql` (tablas `categorias`, `productos`, `usuarios`, `carrito_items`, `pedidos`, `pedido_items` + datos de ejemplo).
 
 Así puedes probar que los datos de la BD se reflejan en la API.
 
@@ -83,6 +86,8 @@ Deberías ver algo como:
 - Productos: GET http://localhost:3000/api/products  
 - Categorías: GET http://localhost:3000/api/categories  
 - Auth: POST http://localhost:3000/api/auth/register | /api/auth/login  
+- Carrito: GET/POST/PATCH/DELETE http://localhost:3000/api/cart (requiere auth)  
+- Pedidos: POST/GET http://localhost:3000/api/orders (requiere auth)  
 
 ### 5. Probar que los datos se reflejan
 
@@ -106,8 +111,10 @@ backend/
 │   └── auth.js         # Verificación de JWT (Bearer)
 ├── routes/
 │   ├── productos.js    # GET /api/products, /api/products/:id, /api/products/category/:slug
-│   ├── categorias.js   # GET /api/categories, /api/categories/:slug
-│   └── auth.js         # POST register, login, logout; GET me; POST refresh
+│   ├── categorias.js   # GET /api/categories, /api/categories/:slug (lista canónica)
+│   ├── auth.js         # POST register, login, logout; GET me; POST refresh
+│   ├── cart.js         # GET/POST/PATCH/DELETE /api/cart (auth)
+│   └── orders.js       # POST/GET /api/orders (checkout y listado; auth)
 ├── lib/
 │   ├── slug.js         # slugify para categorías y productos
 │   └── mapProduct.js   # Fila BD → formato esperado por el frontend
@@ -137,6 +144,28 @@ La BD está en la raíz del repo: `database/el_xolito_mex.db` y `database/schema
   `POST /api/auth/logout`  
   `POST /api/auth/refresh` (body: refreshToken)  
 
+- **Carrito (todos requieren header Authorization: Bearer &lt;token&gt;):**  
+  `GET /api/cart` — items con producto y subtotal  
+  `POST /api/cart/items` (body: producto_id, cantidad?)  
+  `PATCH /api/cart/items/:producto_id` (body: cantidad)  
+  `DELETE /api/cart/items/:producto_id`  
+  `DELETE /api/cart` — vaciar carrito  
+
+- **Pedidos (requieren auth):**  
+  `POST /api/orders` (body opcional: direccion_entrega, contacto) — crea pedido desde carrito, vacía carrito; devuelve pedido_id, total, estado  
+  `GET /api/orders` — lista de pedidos del usuario  
+  `GET /api/orders/:id` — detalle de un pedido con items  
+
+---
+
+## Categorías canónicas
+
+En la BD la tabla `categorias` define la lista oficial. Los productos deben usar exactamente estos nombres en `productos.categoria`:
+
+**Anillos, Brazaletes, Collares, Aretes, Broqueles, Pulseras, Dijes, Conjuntos.**
+
+Slugs en API: `anillos`, `brazaletes`, `collares`, `aretes`, `broqueles`, `pulseras`, `dijes`, `conjuntos`.
+
 ---
 
 ## Cuando tengas la lista de inventario
@@ -144,5 +173,6 @@ La BD está en la raíz del repo: `database/el_xolito_mex.db` y `database/schema
 Cuando te pasen la tabla/Excel con los productos:
 
 1. Importar los datos a la tabla `productos` (INSERT o script que te generamos a partir del archivo).
-2. Subir las imágenes a la carpeta de assets y que `imagen_path` en la BD coincida con la ruta que use el front (p. ej. `assets/Dormilonas/nombre.jpg`).
-3. No hace falta tocar el backend ni el frontend si la estructura de la tabla y de la API se mantienen.
+2. Usar en `productos.categoria` solo nombres de la lista canónica (Anillos, Brazaletes, Collares, Aretes, Broqueles, Pulseras, Dijes, Conjuntos).
+3. Subir las imágenes a la carpeta de assets y que `imagen_path` en la BD coincida con la ruta que use el front (p. ej. `assets/Broqueles/nombre.jpg`).
+4. No hace falta tocar el backend ni el frontend si la estructura de la tabla y de la API se mantienen.
