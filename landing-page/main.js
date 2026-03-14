@@ -2,6 +2,18 @@
 // Variable global para almacenar productos cargados desde la API
 let PRODUCTS = [];
 
+// Productos de ejemplo cuando la API no está disponible (misma forma que la API)
+const EXAMPLE_PRODUCTS = [
+	{ id: 1, nombre: 'Broqueles Colibrí', precio: 320, material: 'Plata .925', categoria_nombre: 'Broqueles', categoria_slug: 'broqueles', destacado: 1, imagenes: [{ ruta: 'assets/Broqueles/broqueles-colibri.jpg', es_principal: true }], image: 'assets/Broqueles/broqueles-colibri.jpg', descripcion_corta: 'Broqueles inspirados en el colibrí.', color: null, stock: 8 },
+	{ id: 2, nombre: 'Broqueles Catarina', precio: 280, material: 'Plata .925', categoria_nombre: 'Broqueles', categoria_slug: 'broqueles', destacado: 0, imagenes: [{ ruta: 'assets/Broqueles/broqueles-catarina.jpg', es_principal: true }], image: 'assets/Broqueles/broqueles-catarina.jpg', descripcion_corta: 'Broqueles con motivo de catarina.', color: null, stock: 12 },
+	{ id: 3, nombre: 'Pulsera Curb Chain', precio: 650, material: 'Plata .925', categoria_nombre: 'Pulseras', categoria_slug: 'pulseras', destacado: 1, imagenes: [{ ruta: 'assets/Pulseras/pulsera-curb.jpg', es_principal: true }], image: 'assets/Pulseras/pulsera-curb.jpg', descripcion_corta: 'Pulsera tipo curb chain.', color: null, stock: 10 },
+	{ id: 4, nombre: 'Collar Colgante Corazón', precio: 480, material: 'Plata .925', categoria_nombre: 'Collares', categoria_slug: 'collares', destacado: 0, imagenes: [{ ruta: 'assets/Collares/collar-corazon.jpg', es_principal: true }], image: 'assets/Collares/collar-corazon.jpg', descripcion_corta: 'Collar con dije corazón.', color: null, stock: 7 },
+	{ id: 5, nombre: 'Anillo Sello', precio: 520, material: 'Plata .925', categoria_nombre: 'Anillos', categoria_slug: 'anillos', destacado: 1, imagenes: [{ ruta: 'assets/Anillos/anillo-sello.png', es_principal: true }], image: 'assets/Anillos/anillo-sello.png', descripcion_corta: 'Anillo tipo sello con diseño artesanal.', color: null, stock: 3 },
+	{ id: 6, nombre: 'Aretes Hoops Pequeños', precio: 290, material: 'Plata .925', categoria_nombre: 'Aretes', categoria_slug: 'aretes', destacado: 0, imagenes: [{ ruta: 'assets/Aretes/hoops-pequenos.jpg', es_principal: true }], image: 'assets/Aretes/hoops-pequenos.jpg', descripcion_corta: 'Aretes tipo hoop en plata.', color: null, stock: 15 },
+	{ id: 7, nombre: 'Dije Colibrí', precio: 220, material: 'Plata .925', categoria_nombre: 'Dijes', categoria_slug: 'dijes', destacado: 0, imagenes: [{ ruta: 'assets/Dijes/dije-colibri.jpg', es_principal: true }], image: 'assets/Dijes/dije-colibri.jpg', descripcion_corta: 'Dije colibrí para cadena.', color: null, stock: 20 },
+	{ id: 8, nombre: 'Brazalete Canasta', precio: 580, material: 'Plata .925', categoria_nombre: 'Brazaletes', categoria_slug: 'brazaletes', destacado: 1, imagenes: [{ ruta: 'assets/Brazaletes/brazalete-canasta.jpg', es_principal: true }], image: 'assets/Brazaletes/brazalete-canasta.jpg', descripcion_corta: 'Brazalete tipo canasta.', color: null, stock: 6 }
+];
+
 // Función para esperar a que productService esté disponible
 async function waitForProductService(maxAttempts = 50, delay = 200) {
 	console.log('⏳ Esperando a que productService esté disponible...');
@@ -76,8 +88,9 @@ async function loadProductsFromAPI() {
 
 // Función para obtener un producto por ID (compatibilidad con código existente)
 async function getProductById(id) {
-	// Si el producto ya está en PRODUCTS, retornarlo
-	const cachedProduct = PRODUCTS.find(p => p.id === id);
+	const numId = typeof id === 'string' ? parseInt(id, 10) : id;
+	if (Number.isNaN(numId)) return null;
+	const cachedProduct = PRODUCTS.find(p => p.id === numId || p.id == id);
 	if (cachedProduct) {
 		return cachedProduct;
 	}
@@ -118,7 +131,7 @@ class Cart {
 
 	async addItem(productId, quantity = 1) {
 		// Intentar obtener el producto desde cache o API
-		let product = PRODUCTS.find(p => p.id === productId);
+		let product = PRODUCTS.find(p => p.id == productId);
 		
 		// Si no está en cache, cargarlo desde la API
 		if (!product) {
@@ -130,7 +143,7 @@ class Cart {
 			return;
 		}
 
-		const existingItem = this.items.find(item => item.id === productId);
+		const existingItem = this.items.find(item => item.id == productId);
 		if (existingItem) {
 			existingItem.quantity += quantity;
 		} else {
@@ -142,13 +155,13 @@ class Cart {
 	}
 
 	removeItem(productId) {
-		this.items = this.items.filter(item => item.id !== productId);
+		this.items = this.items.filter(item => item.id != productId);
 		this.saveToStorage();
 		this.updateCartUI();
 	}
 
 	updateQuantity(productId, quantity) {
-		const item = this.items.find(item => item.id === productId);
+		const item = this.items.find(item => item.id == productId);
 		if (item) {
 			if (quantity <= 0) {
 				this.removeItem(productId);
@@ -297,31 +310,44 @@ async function loadProductsSimple() {
     if (data.success && data.data && data.data.products) {
       const products = data.data.products;
       console.log(`✅ Se encontraron ${products.length} productos en la base de datos`);
-      return products;
+      if (products.length > 0) {
+        if (window.productService && window.productService.formatProductForFrontend) {
+          PRODUCTS = products.map(p => window.productService.formatProductForFrontend(p));
+        }
+        return products;
+      }
+      console.warn('⚠️ Sin productos en la API, usando ejemplos');
+      const fallback = EXAMPLE_PRODUCTS;
+      PRODUCTS = fallback.map(p => window.productService ? window.productService.formatProductForFrontend(p) : ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
+      return fallback;
     } else if (data.success && Array.isArray(data.data)) {
-      // Fallback: si la respuesta es un array directo
       console.log(`✅ Se encontraron ${data.data.length} productos en la base de datos`);
+      if (window.productService && window.productService.formatProductForFrontend) {
+        PRODUCTS = data.data.map(p => window.productService.formatProductForFrontend(p));
+      }
       return data.data;
     } else {
-      console.warn('⚠️ La API no devolvió productos en el formato esperado:', data);
-      return [];
+      console.warn('⚠️ La API no devolvió productos, usando ejemplos');
+      if (window.productService && window.productService.formatProductForFrontend) {
+        PRODUCTS = EXAMPLE_PRODUCTS.map(p => window.productService.formatProductForFrontend(p));
+      } else {
+        PRODUCTS = EXAMPLE_PRODUCTS.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
+      }
+      return EXAMPLE_PRODUCTS;
     }
   } catch (error) {
-    // Manejar errores de red (CORS, conexión rechazada, etc.)
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
-      console.error('❌ Error de conexión: No se pudo conectar al servidor backend');
-      console.error('   Asegúrate de que el servidor esté corriendo:');
-      console.error('   1. Abre una terminal');
-      console.error('   2. cd backend');
-      console.error('   3. npm run dev');
-    } else if (error.message.includes('CORS')) {
-      console.error('❌ Error de CORS: El servidor backend no permite solicitudes desde este origen');
-      console.error('   Verifica la configuración de CORS en backend/.env');
+      console.warn('⚠️ API no disponible, usando productos de ejemplo');
     } else {
-      console.error('❌ Error al cargar productos:', error.message);
+      console.warn('⚠️ Error al cargar productos:', error.message, '– usando productos de ejemplo');
     }
-    console.error('   URL intentada: http://localhost:3000/api/products?activo=1');
-    return [];
+    const fallback = EXAMPLE_PRODUCTS;
+    if (window.productService && window.productService.formatProductForFrontend) {
+      PRODUCTS = fallback.map(p => window.productService.formatProductForFrontend(p));
+    } else {
+      PRODUCTS = fallback.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
+    }
+    return fallback;
   }
 }
 
@@ -521,48 +547,67 @@ function renderCategories(categories) {
 	const categoriesGrid = document.querySelector('.categories-grid');
 	if (!categoriesGrid) return;
 	
-	// Mapeo de slugs a imágenes (mantener las imágenes existentes)
 	const categoryImages = {
-		'anillos': 'assets/Categorias/anillos.jpeg',
-		'aretes': 'assets/Categorias/aretes.jpeg',
-		'collares': 'assets/Categorias/collares.jpeg',
-		'pulseras': 'assets/Categorias/pulseras.jpeg',
-		'conjuntos': 'assets/Categorias/conjuntos.jpeg',
-		'piedras': 'assets/Categorias/piedras.jpeg'
+		'anillos': 'assets/Categorias/anillo.png',
+		'brazaletes': 'assets/Categorias/brazaletes.png',
+		'collares': 'assets/Categorias/collar.png',
+		'aretes': 'assets/Categorias/aretes.png',
+		'broqueles': 'assets/Categorias/broqueles.png',
+		'pulseras': 'assets/Categorias/pulseras.png',
+		'dijes': 'assets/Categorias/dije.png',
+		'conjuntos': 'assets/Categorias/conjunto.png'
 	};
-	
-	// Mapeo de slugs a descripciones por defecto
 	const categoryDescriptions = {
 		'anillos': 'Piezas únicas para tus dedos',
-		'aretes': 'Elegantes adornos para tus orejas',
+		'brazaletes': 'Diseños clásicos en plata',
 		'collares': 'Declaraciones de estilo únicas',
+		'aretes': 'Elegantes adornos para tus orejas',
+		'broqueles': 'Dormilonas y broqueles artesanales',
 		'pulseras': 'Accesorios para tus muñecas',
-		'conjuntos': 'Pequeños tesoros con significado',
-		'piedras': 'Minerales naturales mexicanos'
+		'dijes': 'Pequeños tesoros con significado',
+		'conjuntos': 'Sets coordinados'
 	};
-	
-	// Ordenar categorías por el campo 'orden' de la base de datos
-	const sortedCategories = [...categories].sort((a, b) => a.orden - b.orden);
-	
-	categoriesGrid.innerHTML = sortedCategories.map(category => {
-		const imagePath = categoryImages[category.slug] || category.imagen_icono || 'assets/placeholder.jpg';
-		const description = category.descripcion || categoryDescriptions[category.slug] || `Descubre nuestra colección de ${category.nombre.toLowerCase()}`;
-		
-		return `
-			<div class="category-card" data-category="${category.slug}">
-				<div class="category-image">
-					<div class="category-placeholder">
-						<img src="${imagePath}" alt="Categoría ${category.nombre}" />
+	const bentoClasses = ['bento-small', 'bento-wide', 'bento-medium', 'bento-medium', 'bento-tall', 'bento-medium', 'bento-tall', 'bento-wide-bottom'];
+	const sortedCategories = [...categories].sort((a, b) => (a.orden != null ? a.orden : a.id) - (b.orden != null ? b.orden : b.id));
+	const isBento = categoriesGrid.classList.contains('bento-grid');
+	const description = (cat) => cat.descripcion || categoryDescriptions[cat.slug] || `Descubre ${cat.nombre.toLowerCase()}`;
+	const imagePath = (cat) => categoryImages[cat.slug] || cat.imagen_icono || 'assets/placeholder.jpg';
+
+	if (isBento) {
+		categoriesGrid.innerHTML = sortedCategories.map((category, i) => {
+			const bg = imagePath(category);
+			const desc = description(category);
+			const bentoClass = bentoClasses[i % bentoClasses.length];
+			return `
+				<a href="tienda.html?categoria=${category.slug}" class="category-card bento-item ${bentoClass} ${category.slug === 'broqueles' ? 'bento-broqueles' : ''}" data-category="${category.slug}" style="--bg: url('${bg}')">
+					<span class="bento-overlay"></span>
+					<span class="bento-text">
+						<strong class="bento-title">${category.nombre}</strong>
+						<span class="bento-subtitle">${desc}</span>
+					</span>
+				</a>
+			`;
+		}).join('');
+	} else {
+		categoriesGrid.innerHTML = sortedCategories.map(category => {
+			const imagePathUrl = imagePath(category);
+			const desc = description(category);
+			return `
+				<div class="category-card" data-category="${category.slug}">
+					<div class="category-image">
+						<div class="category-placeholder">
+							<img src="${imagePathUrl}" alt="Categoría ${category.nombre}" />
+						</div>
+					</div>
+					<div class="category-content">
+						<h3>${category.nombre}</h3>
+						<p>${desc}</p>
+						<a href="tienda.html?categoria=${category.slug}" class="btn btn-primary" data-category-link="${category.slug}">Ver productos</a>
 					</div>
 				</div>
-				<div class="category-content">
-					<h3>${category.nombre}</h3>
-					<p>${description}</p>
-					<a href="tienda.html?categoria=${category.slug}" class="btn btn-primary" data-category-link="${category.slug}">Ver productos</a>
-				</div>
-			</div>
-		`;
-	}).join('');
+			`;
+		}).join('');
+	}
 	
 	// Configurar event listeners después de renderizar
 	setupCategories();
@@ -1067,7 +1112,7 @@ function showAuthMessage(message, type = 'success') {
       right: 20px;
       padding: 12px 20px;
       border-radius: 8px;
-      font-family: 'Montserrat', sans-serif;
+      font-family: "GFS Didot", serif;
       font-weight: 500;
       z-index: 10000;
       transition: all 0.3s ease;
@@ -1503,12 +1548,8 @@ async function main() {
 	console.log(`📦 Productos en cache después de carga: ${PRODUCTS.length}`);
 	
 	if (PRODUCTS.length === 0) {
-		console.error('❌ PROBLEMA: No se cargaron productos desde la API');
-		console.error('   Verifica:');
-		console.error('   1. ¿El servidor backend está corriendo? (http://localhost:3000)');
-		console.error('   2. ¿Hay productos en la base de datos?');
-		console.error('   3. ¿La API está respondiendo? Prueba: http://localhost:3000/api/products');
-		console.error('   4. ¿productService.js se cargó? Verifica en Network tab');
+		console.warn('⚠️ No hay productos desde la API, usando productos de ejemplo');
+		PRODUCTS = EXAMPLE_PRODUCTS.map(p => window.productService && window.productService.formatProductForFrontend ? window.productService.formatProductForFrontend(p) : { id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color });
 	} else {
 		console.log(`✅ ${PRODUCTS.length} productos cargados exitosamente`);
 		console.log('   Categorías:', [...new Set(PRODUCTS.map(p => p.category))]);
@@ -1960,11 +2001,11 @@ async function openProductDetail(productId) {
           </div>
           <div class="meta-item">
             <strong>Color:</strong>
-            <span>${product.color}</span>
+            <span>${product.color || '—'}</span>
           </div>
           <div class="meta-item">
             <strong>Categoría:</strong>
-            <span>${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</span>
+            <span>${(product.category || product.categoria_nombre || '').charAt(0).toUpperCase() + (product.category || product.categoria_nombre || '').slice(1)}</span>
           </div>
           <div class="meta-item">
             <strong>SKU:</strong>
@@ -2090,7 +2131,7 @@ function showAddToCartMessage(productId, quantity) {
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
-      font-family: 'Montserrat', sans-serif;
+      font-family: "GFS Didot", serif;
       font-weight: 500;
       z-index: 10000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -2219,11 +2260,11 @@ async function renderProductPage() {
           </div>
           <div class="meta-item">
             <strong>Color:</strong>
-            <span>${product.color}</span>
+            <span>${product.color || '—'}</span>
           </div>
           <div class="meta-item">
             <strong>Categoría:</strong>
-            <span>${product.category.charAt(0).toUpperCase() + product.category.slice(1)}</span>
+            <span>${(product.category || product.categoria_nombre || '').charAt(0).toUpperCase() + (product.category || product.categoria_nombre || '').slice(1)}</span>
           </div>
           <div class="meta-item">
             <strong>SKU:</strong>
@@ -2267,11 +2308,9 @@ async function renderProductPage() {
         </div>
 
         <div class="product-page-description" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
-          <h3 style="font-family: 'Playfair Display', serif; margin-bottom: 1rem;">Descripción</h3>
+          <h3 style="font-family: \"GFS Didot\", serif; margin-bottom: 1rem;">Descripción</h3>
           <p style="color: var(--gris); line-height: 1.8;">
-            Esta hermosa pieza de joyería mexicana minimalista está hecha a mano con ${product.material.toLowerCase()} 
-            en color ${product.color.toLowerCase()}. Cada pieza es única y refleja la esencia de la artesanía mexicana 
-            con un diseño contemporáneo.
+            ${(product.descripcion_larga || product.descripcion_corta) || `Pieza de joyería mexicana minimalista hecha a mano con ${(product.material || '').toLowerCase()}. Cada pieza es única y refleja la esencia de la artesanía mexicana.`}
           </p>
         </div>
       </div>

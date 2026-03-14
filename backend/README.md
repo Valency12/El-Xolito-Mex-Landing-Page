@@ -97,6 +97,17 @@ Deberías ver algo como:
   - `http://localhost:3000/api/categories`
 - La landing/tienda (frontend) debe apuntar a `http://localhost:3000/api`; si el servidor está en marcha, los productos y categorías que ves vienen de la BD.
 
+### 6. Probar carrito y checkout (script)
+
+Con el servidor en marcha, en otra terminal:
+
+```bash
+cd backend
+bash scripts/test-api.sh
+```
+
+El script hace: health → categorías → productos → registro (o login) → agregar al carrito → ver carrito → crear pedido → listar pedidos. Si algo falla, revisa que el servidor esté en `http://localhost:3000` y que la BD tenga datos (`npm run db:init`).
+
 ---
 
 ## Estructura del proyecto backend

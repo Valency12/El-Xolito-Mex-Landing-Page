@@ -21,6 +21,7 @@ router.get('/', (req, res) => {
       id: r.id,
       nombre: r.nombre,
       slug: r.slug,
+      orden: r.orden != null ? r.orden : r.id,
       total: r.total || 0
     }));
     return res.json({

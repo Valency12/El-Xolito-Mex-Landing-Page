@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Tienda – El Xolito Mex</title>
+  <meta name="description" content="Joyería mexicana. Anillos, brazaletes, collares, aretes, broqueles, pulseras, dijes y conjuntos." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=GFS+Didot&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="El Xolito Mex">
+        <img src="assets/Logos/logo3.jpeg" alt="El Xolito Mex" class="brand-logo" />
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <ul class="nav-list">
+          <li><a href="index.html">Inicio</a></li>
+          <li><a href="tienda.html">Tienda</a></li>
+          <li><a href="index.html#ofertas">Ofertas</a></li>
+          <li><a href="index.html#nosotros">Nosotros</a></li>
+          <li><a href="index.html#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <div class="auth-buttons" id="authButtonsContainer"></div>
+        <button class="profile-toggle" id="profileToggle" aria-label="Mi cuenta">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
+          </svg>
+        </button>
+        <button class="cart-toggle" aria-label="Ver carrito" data-count="0">
+          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-cart2" viewBox="0 0 16 16">
+            <path d="M0 2.5A.5.5 0 0 1 .5 2H2a.5.5 0 0 1 .485.379L2.89 4H14.5a.5.5 0 0 1 .485.621l-1.5 6A.5.5 0 0 1 13 11H4a.5.5 0 0 1-.485-.379L1.61 3H.5a.5.5 0 0 1-.5-.5M3.14 5l1.25 5h8.22l1.25-5zM5 13a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0m9-1a1 1 0 1 0 0 2 1 1 0 0 0 0-2m-2 1a2 2 0 1 1 4 0 2 2 0 0 1-4 0"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="border-mex"></div>
+  </header>
+
+  <main>
+    <section class="shop-hero shop-hero-tienda">
+      <div class="container">
+        <p class="shop-hero-tagline">Todas las colecciones</p>
+      </div>
+    </section>
+
+    <section class="categories categories-bento">
+      <div class="container container-bento">
+        <div class="categories-grid bento-grid">
+          <a href="tienda.html?categoria=anillos" class="category-card bento-item bento-small" data-category="anillos" style="--bg: url('assets/Categorias/anillo.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Anillos</strong>
+              <span class="bento-subtitle">Piezas únicas para tus dedos</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=brazaletes" class="category-card bento-item bento-wide" data-category="brazaletes" style="--bg: url('assets/Categorias/brazaletes.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Brazaletes</strong>
+              <span class="bento-subtitle">Diseños clásicos en plata</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=collares" class="category-card bento-item bento-medium" data-category="collares" style="--bg: url('assets/Categorias/collar.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Collares</strong>
+              <span class="bento-subtitle">Declaraciones de estilo únicas</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=aretes" class="category-card bento-item bento-medium" data-category="aretes" style="--bg: url('assets/Categorias/aretes.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Aretes</strong>
+              <span class="bento-subtitle">Elegantes adornos para tus orejas</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=broqueles" class="category-card bento-item bento-tall bento-broqueles" data-category="broqueles" style="--bg: url('assets/Categorias/broqueles.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Broqueles</strong>
+              <span class="bento-subtitle">Dormilonas y broqueles artesanales</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=pulseras" class="category-card bento-item bento-medium" data-category="pulseras" style="--bg: url('assets/Categorias/pulseras.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Pulseras</strong>
+              <span class="bento-subtitle">Accesorios para tus muñecas</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=dijes" class="category-card bento-item bento-tall" data-category="dijes" style="--bg: url('assets/Categorias/dije.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Dijes</strong>
+              <span class="bento-subtitle">Pequeños tesoros con significado</span>
+            </span>
+          </a>
+          <a href="tienda.html?categoria=conjuntos" class="category-card bento-item bento-wide-bottom" data-category="conjuntos" style="--bg: url('assets/Categorias/conjunto.png')">
+            <span class="bento-overlay"></span>
+            <span class="bento-text">
+              <strong class="bento-title">Conjuntos</strong>
+              <span class="bento-subtitle">Sets coordinados</span>
+            </span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section id="productos" class="productos-section" style="display: none;">
+      <div class="container">
+        <div class="shop-controls" style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;"></div>
+        <div id="productGrid"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="cartModal" class="cart-modal" aria-hidden="true">
+    <div class="cart-overlay"></div>
+    <div class="cart-drawer">
+      <div class="cart-header">
+        <h3>Tu carrito</h3>
+        <button class="cart-close" aria-label="Cerrar carrito">×</button>
+      </div>
+      <div class="cart-content">
+        <div id="cartItems" class="cart-items"></div>
+        <div class="cart-empty">
+          <p>Tu carrito está vacío</p>
+          <a href="tienda.html" class="btn btn-primary">Ir a la tienda</a>
+        </div>
+      </div>
+      <div class="cart-footer">
+        <div class="cart-total">
+          <span>Total: <strong id="cartTotal">$0</strong></span>
+        </div>
+        <button class="btn btn-primary cart-checkout" disabled>Proceder al pago</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="services/authService.js"></script>
+  <script src="services/productService.js"></script>
+  <script type="module" src="main.js"></script>
+</body>
+</html>
