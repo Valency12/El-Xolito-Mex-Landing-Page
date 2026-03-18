@@ -3023,6 +3023,7 @@ img{ display:block; max-width:100%; height:auto; }
 /* Hero tienda: frase corta en vez de "Tienda" grande */
 .shop-hero-tienda .display{ display: none; }
 .shop-hero-tienda .shop-hero-tagline{
+  font-family: "GFS Didot", serif;
   font-size: clamp(1.15rem, 2vw + 1rem, 1.5rem);
   font-weight: 400;
   letter-spacing: 0.02em;
@@ -3032,7 +3033,7 @@ img{ display:block; max-width:100%; height:auto; }
 }
 
 /* Bento grid: más ancho y cards más grandes */
-.categories-bento{ background: #000; padding: 2rem 0 3rem; }
+.categories-bento{ background: #000; padding: 0 0 3rem; }
 .container-bento{
   width: min(1600px, 96vw);
   max-width: none;
@@ -3086,7 +3087,8 @@ img{ display:block; max-width:100%; height:auto; }
 .bento-title{
   font-family: "GFS Didot", serif;
   font-size: 1.45rem;
-  font-weight: 600;
+  font-weight: 400;
+  letter-spacing: 0.02em;
   line-height: 1.2;
   text-shadow: 0 1px 3px rgba(0,0,0,.5);
 }
@@ -3118,6 +3120,142 @@ img{ display:block; max-width:100%; height:auto; }
   .bento-grid .category-card{ min-height: 200px; padding: 1.25rem; }
   .bento-title{ font-size: 1.25rem; }
   .bento-subtitle{ font-size: 0.875rem; }
+}
+
+/* Lista de productos (tienda) */
+.productos-section{
+  background: #fff;
+  padding: 3rem 0 4rem;
+}
+.productos-nav{
+  margin-bottom: 1.25rem;
+}
+.productos-back{
+  font-family: "GFS Didot", serif;
+  font-size: 1rem;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #000;
+  text-decoration: none;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+.productos-back:hover{
+  opacity: 1;
+  text-decoration: underline;
+}
+.productos-section-title{
+  font-family: "GFS Didot", serif;
+  font-size: clamp(1.15rem, 2vw + 1rem, 1.5rem);
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  color: #000;
+  margin: 0 0 1rem 0;
+}
+.productos-section .container{
+  width: min(1400px, 94vw);
+  margin-inline: auto;
+  padding-inline: clamp(1rem, 3vw, 2rem);
+}
+.tienda-product-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2rem;
+  padding: 0;
+  list-style: none;
+  margin: 0;
+}
+.tienda-product-card{
+  background: #fff;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid #eee;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  transition: transform .3s ease, box-shadow .3s ease, border-color .2s ease;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+}
+.tienda-product-card:hover{
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,.12);
+  border-color: #ddd;
+}
+.tienda-product-card__image{
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #f5f5f5;
+}
+.tienda-product-card__image img{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.tienda-product-card__body{
+  padding: 1.25rem 1.25rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+.tienda-product-card__title{
+  font-family: "GFS Didot", serif;
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: #000;
+  margin: 0 0 0.35rem 0;
+  line-height: 1.3;
+}
+.tienda-product-card__meta{
+  font-size: 0.875rem;
+  color: #6b6b6b;
+  margin: 0 0 1rem 0;
+}
+.tienda-product-card__footer{
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+.tienda-product-card__price{
+  font-family: "GFS Didot", serif;
+  font-size: 1.35rem;
+  font-weight: 400;
+  color: #000;
+}
+.tienda-product-card__btn{
+  font-family: "GFS Didot", serif;
+  font-size: 0.9rem;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+  cursor: pointer;
+  transition: background .2s ease, color .2s ease;
+}
+.tienda-product-card__btn:hover{
+  background: #fff;
+  color: #000;
+}
+.tienda-empty{
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #666;
+  font-family: "GFS Didot", serif;
+  grid-column: 1 / -1;
+}
+@media (max-width: 720px){
+  .tienda-product-grid{
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+  .tienda-product-card__body{ padding: 1rem 1rem 1.25rem; }
+  .tienda-product-card__title{ font-size: 1.05rem; }
+  .tienda-product-card__price{ font-size: 1.2rem; }
 }
 
 @media (max-width: 560px){

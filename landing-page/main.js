@@ -313,19 +313,23 @@ async function loadProductsSimple() {
       if (products.length > 0) {
         if (window.productService && window.productService.formatProductForFrontend) {
           PRODUCTS = products.map(p => window.productService.formatProductForFrontend(p));
+        } else {
+          PRODUCTS = products.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: (p.imagenes && p.imagenes[0]) ? p.imagenes[0].ruta : null, category: p.categoria_slug, imagenes: p.imagenes || [], color: p.color }));
         }
-        return products;
+        return PRODUCTS;
       }
       console.warn('⚠️ Sin productos en la API, usando ejemplos');
       const fallback = EXAMPLE_PRODUCTS;
       PRODUCTS = fallback.map(p => window.productService ? window.productService.formatProductForFrontend(p) : ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
-      return fallback;
+      return PRODUCTS;
     } else if (data.success && Array.isArray(data.data)) {
       console.log(`✅ Se encontraron ${data.data.length} productos en la base de datos`);
       if (window.productService && window.productService.formatProductForFrontend) {
         PRODUCTS = data.data.map(p => window.productService.formatProductForFrontend(p));
+      } else {
+        PRODUCTS = data.data.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: (p.imagenes && p.imagenes[0]) ? p.imagenes[0].ruta : null, category: p.categoria_slug, imagenes: p.imagenes || [], color: p.color }));
       }
-      return data.data;
+      return PRODUCTS;
     } else {
       console.warn('⚠️ La API no devolvió productos, usando ejemplos');
       if (window.productService && window.productService.formatProductForFrontend) {
@@ -333,7 +337,7 @@ async function loadProductsSimple() {
       } else {
         PRODUCTS = EXAMPLE_PRODUCTS.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
       }
-      return EXAMPLE_PRODUCTS;
+      return PRODUCTS;
     }
   } catch (error) {
     if (error.name === 'TypeError' && error.message.includes('fetch')) {
@@ -347,8 +351,36 @@ async function loadProductsSimple() {
     } else {
       PRODUCTS = fallback.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color }));
     }
-    return fallback;
+    return PRODUCTS;
   }
+}
+
+// Placeholder cuando la imagen del producto no existe (ruta 404)
+const PLACEHOLDER_IMAGE = 'assets/placeholder.svg';
+// Imagen de categoría por slug (archivos que sí existen en assets/Categorias/)
+const CATEGORY_IMAGE_BY_SLUG = {
+  anillos: 'assets/Categorias/anillo.png',
+  brazaletes: 'assets/Categorias/brazaletes.png',
+  collares: 'assets/Categorias/collar.png',
+  aretes: 'assets/Categorias/aretes.png',
+  broqueles: 'assets/Categorias/broqueles.png',
+  pulseras: 'assets/Categorias/pulseras.png',
+  dijes: 'assets/Categorias/dije.png',
+  conjuntos: 'assets/Categorias/conjunto.png'
+};
+
+function getProductImageUrl(product) {
+  if (product.image) return product.image;
+  if (product.imagenes && product.imagenes.length > 0) {
+    const main = product.imagenes.find(img => img.es_principal) || product.imagenes[0];
+    if (main && main.ruta) return main.ruta;
+  }
+  return PLACEHOLDER_IMAGE;
+}
+
+function getProductFallbackImage(product) {
+  const slug = (product.category || product.categoria_slug || '').toLowerCase();
+  return CATEGORY_IMAGE_BY_SLUG[slug] || PLACEHOLDER_IMAGE;
 }
 
 // Función simple para renderizar productos con diseño nuevo
@@ -358,104 +390,77 @@ function renderProductsSimple(products) {
     console.error('❌ No se encontró el elemento productGrid');
     return;
   }
-  
-  // Mostrar la sección de productos
+
   const productosSection = document.getElementById('productos');
   if (productosSection) {
     productosSection.style.display = 'block';
   }
-  
-  // Limpiar el grid
+
   grid.innerHTML = '';
-  
+  grid.className = 'tienda-product-grid';
+
   if (!products || products.length === 0) {
-    console.warn('⚠️ No hay productos para mostrar');
-    grid.innerHTML = '<p style="text-align: center; padding: 2rem; color: #666;">No hay productos disponibles</p>';
+    grid.innerHTML = '<p class="tienda-empty">No hay productos disponibles</p>';
     return;
   }
-  
-  console.log(`🎨 Renderizando ${products.length} productos con diseño nuevo`);
-  
+
+  const productName = (p) => p.name != null ? p.name : p.nombre;
+  const productPrice = (p) => (p.price != null ? p.price : p.precio) || 0;
+
   products.forEach(product => {
-    // Obtener la imagen principal
-    let imageUrl = 'assets/placeholder.jpg';
-    if (product.imagenes && product.imagenes.length > 0) {
-      const mainImage = product.imagenes.find(img => img.es_principal) || product.imagenes[0];
-      imageUrl = mainImage.ruta || imageUrl;
-    }
-    
-    // Crear tarjeta de producto con diseño simple
-    const card = document.createElement('div');
-    card.className = 'product-card-simple';
-    card.style.cssText = `
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      padding: 1rem;
-      background: white;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      transition: transform 0.2s, box-shadow 0.2s;
-      cursor: pointer;
-    `;
-    
+    const imageUrl = getProductImageUrl(product);
+    const fallbackUrl = getProductFallbackImage(product);
+    const nombre = productName(product);
+    const precio = productPrice(product);
+    const material = product.material || 'Material no especificado';
+
+    const card = document.createElement('article');
+    card.className = 'tienda-product-card';
     card.innerHTML = `
-      <div style="width: 100%; height: 200px; overflow: hidden; border-radius: 4px; margin-bottom: 1rem; background: #f5f5f5;">
-        <img src="${imageUrl}" alt="${product.nombre}" 
-             style="width: 100%; height: 100%; object-fit: cover;"
-             onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgdmlld0JveD0iMCAwIDIwMCAyMDAiIGZpbGw9IiNmNWY1ZjUiPjx0ZXh0IHg9IjEwMCIgeT0iMTAwIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkb21pbmFudC1iYXNlbGluZT0ibWlkZGxlIiBmaWxsPSIjOTk5IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=='">
+      <div class="tienda-product-card__image">
+        <img src="${imageUrl}" alt="${nombre}" data-fallback="${fallbackUrl}">
       </div>
-      <h3 style="margin: 0 0 0.5rem 0; font-size: 1.1rem; color: #333;">${product.nombre}</h3>
-      <p style="margin: 0 0 0.5rem 0; color: #666; font-size: 0.9rem;">${product.material || 'Material no especificado'}</p>
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem;">
-        <span style="font-size: 1.25rem; font-weight: bold; color: #d4af37;">$${product.precio.toFixed(2)}</span>
-        <button class="btn-add-cart-simple" data-product-id="${product.id}" 
-                style="background: #d4af37; color: white; border: none; padding: 0.5rem 1rem; border-radius: 4px; cursor: pointer; font-weight: bold;">
-          Agregar
-        </button>
+      <div class="tienda-product-card__body">
+        <h3 class="tienda-product-card__title">${nombre}</h3>
+        <p class="tienda-product-card__meta">${material}</p>
+        <div class="tienda-product-card__footer">
+          <span class="tienda-product-card__price">${formatCurrency(precio)}</span>
+          <button type="button" class="tienda-product-card__btn btn-add-cart-simple" data-product-id="${product.id}">Agregar</button>
+        </div>
       </div>
     `;
-    
-    // Efecto hover
-    card.addEventListener('mouseenter', () => {
-      card.style.transform = 'translateY(-4px)';
-      card.style.boxShadow = '0 4px 8px rgba(0,0,0,0.15)';
-    });
-    card.addEventListener('mouseleave', () => {
-      card.style.transform = 'translateY(0)';
-      card.style.boxShadow = '0 2px 4px rgba(0,0,0,0.1)';
-    });
-    
-    // Click en la tarjeta
+
+    const img = card.querySelector('.tienda-product-card__image img');
+    if (img) {
+      img.addEventListener('error', function onImgError() {
+        img.removeEventListener('error', onImgError);
+        const fallback = img.dataset.fallback || PLACEHOLDER_IMAGE;
+        img.src = fallback;
+      });
+    }
+
     card.addEventListener('click', (e) => {
       if (e.target.classList.contains('btn-add-cart-simple') || e.target.closest('.btn-add-cart-simple')) {
-        return; // El botón maneja su propio click
+        return;
       }
       window.location.href = `producto.html?id=${product.id}`;
     });
-    
-    // Botón agregar al carrito
+
     const addBtn = card.querySelector('.btn-add-cart-simple');
     if (addBtn) {
       addBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         if (typeof cart !== 'undefined' && cart.addItem) {
           cart.addItem(product.id, 1);
-          alert(`✅ ${product.nombre} agregado al carrito`);
+          alert(`✅ ${nombre} agregado al carrito`);
         } else {
-          alert(`✅ ${product.nombre} agregado al carrito (carrito no disponible)`);
+          alert(`✅ ${nombre} agregado al carrito`);
         }
       });
     }
-    
+
     grid.appendChild(card);
   });
-  
-  // Aplicar estilos al grid
-  grid.style.cssText = `
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 1.5rem;
-    padding: 2rem 0;
-  `;
 }
 
 function showProductModal(product) {
@@ -1588,29 +1593,42 @@ async function main() {
 		const categoria = urlParams.get('categoria');
 		const filterParam = urlParams.get('filter');
 		const productId = urlParams.get('id');
-		
-		// NUEVO: Cargar y mostrar productos con diseño simple
-		console.log('🔄 Cargando productos desde la API para mostrar...');
-		let products = await loadProductsSimple();
-		
-		// Filtrar por categoría si está en la URL (antes de renderizar)
-		if (categoria || filterParam) {
-			const activeCategory = categoria || filterParam;
-			console.log(`📂 Categoría detectada en URL: "${activeCategory}"`);
-			if (products.length > 0) {
-				const filteredProducts = products.filter(p => {
-					const productCategory = p.categoria_slug || p.categoria || p.category;
-					return productCategory === activeCategory;
-				});
-				if (filteredProducts.length > 0) {
-					console.log(`✅ ${filteredProducts.length} productos filtrados por categoría "${activeCategory}"`);
-					products = filteredProducts;
-				} else {
-					console.warn(`⚠️ No se encontraron productos para la categoría "${activeCategory}"`);
-				}
+		const activeCategoryParam = categoria || filterParam;
+
+		// Nombre visible de la categoría (mismo estilo que "Todas las colecciones")
+		const CATEGORY_LABELS = { anillos: 'Anillos', brazaletes: 'Brazaletes', collares: 'Collares', aretes: 'Aretes', broqueles: 'Broqueles', pulseras: 'Pulseras', dijes: 'Dijes', conjuntos: 'Conjuntos' };
+		const productosSectionTitleEl = document.getElementById('productosSectionTitle');
+		if (productosSectionTitleEl) {
+			if (activeCategoryParam) {
+				const label = CATEGORY_LABELS[activeCategoryParam.toLowerCase()] || activeCategoryParam.charAt(0).toUpperCase() + activeCategoryParam.slice(1).toLowerCase();
+				productosSectionTitleEl.textContent = label;
+				productosSectionTitleEl.style.display = 'block';
+				productosSectionTitleEl.removeAttribute('aria-hidden');
+			} else {
+				productosSectionTitleEl.style.display = 'none';
+				productosSectionTitleEl.setAttribute('aria-hidden', 'true');
 			}
 		}
-		
+
+		// Cargar y mostrar productos
+		console.log('🔄 Cargando productos desde la API para mostrar...');
+		let products = await loadProductsSimple();
+
+		// Filtrar por categoría si está en la URL (comparación normalizada)
+		if (activeCategoryParam && products.length > 0) {
+			const slugNorm = String(activeCategoryParam).toLowerCase().trim();
+			const filteredProducts = products.filter(p => {
+				const pc = p.categoria_slug || p.categoria || p.category;
+				return pc != null && String(pc).toLowerCase().trim() === slugNorm;
+			});
+			if (filteredProducts.length > 0) {
+				console.log(`✅ ${filteredProducts.length} productos filtrados por categoría "${activeCategoryParam}"`);
+				products = filteredProducts;
+			} else {
+				console.warn(`⚠️ No se encontraron productos para la categoría "${activeCategoryParam}"`);
+			}
+		}
+
 		// Renderizar productos (filtrados o todos)
 		if (products.length > 0) {
 			console.log(`✅ ${products.length} productos cargados, renderizando con diseño nuevo...`);

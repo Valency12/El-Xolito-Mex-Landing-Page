@@ -171,7 +171,7 @@ async function getCategoryBySlug(slug) {
 // Función helper para obtener la imagen principal de un producto
 function getMainImage(product) {
   if (!product || !product.imagenes || product.imagenes.length === 0) {
-    return product?.image || 'assets/placeholder.jpg'; // Fallback a imagen hardcodeada si existe
+    return product?.image || 'assets/placeholder.svg';
   }
   
   const mainImage = product.imagenes.find(img => img.es_principal);
