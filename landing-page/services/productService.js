@@ -1,5 +1,8 @@
 // Servicio de productos - Conecta con la API del backend
-const API_BASE_URL = 'http://localhost:3000/api';
+// Nota: este archivo puede ejecutarse más de una vez en algunas cargas (por ejemplo, navegación / recargas),
+// así que usamos `var` para evitar el error "Identifier ... has already been declared".
+var API_BASE_URL = window.API_BASE_URL || 'http://localhost:3000/api';
+window.API_BASE_URL = API_BASE_URL;
 
 // Función para hacer requests a la API
 async function apiRequest(endpoint, options = {}) {

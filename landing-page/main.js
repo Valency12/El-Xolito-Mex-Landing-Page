@@ -284,6 +284,12 @@ function renderProducts(products) {
 }
 */
 
+// Alias de compatibilidad: el código legado (categorías/filtros) llama a `renderProducts(...)`.
+// Ahora redirigimos a la versión con el diseño nuevo para que la tienda funcione por categoría.
+function renderProducts(products) {
+	renderProductsSimple(products);
+}
+
 /* ============================================
    NUEVO DISEÑO SIMPLE PARA PRODUCTOS
    ============================================ */
@@ -584,7 +590,7 @@ function renderCategories(categories) {
 			const desc = description(category);
 			const bentoClass = bentoClasses[i % bentoClasses.length];
 			return `
-				<a href="tienda.html?categoria=${category.slug}" class="category-card bento-item ${bentoClass} ${category.slug === 'broqueles' ? 'bento-broqueles' : ''}" data-category="${category.slug}" style="--bg: url('${bg}')">
+				<a href="tienda?categoria=${category.slug}" class="category-card bento-item ${bentoClass} ${category.slug === 'broqueles' ? 'bento-broqueles' : ''}" data-category="${category.slug}" style="--bg: url('${bg}')">
 					<span class="bento-overlay"></span>
 					<span class="bento-text">
 						<strong class="bento-title">${category.nombre}</strong>
@@ -607,7 +613,7 @@ function renderCategories(categories) {
 					<div class="category-content">
 						<h3>${category.nombre}</h3>
 						<p>${desc}</p>
-						<a href="tienda.html?categoria=${category.slug}" class="btn btn-primary" data-category-link="${category.slug}">Ver productos</a>
+						<a href="tienda?categoria=${category.slug}" class="btn btn-primary" data-category-link="${category.slug}">Ver productos</a>
 					</div>
 				</div>
 			`;
@@ -641,7 +647,7 @@ function setupCategories() {
 					e.preventDefault();
 					e.stopPropagation();
 					console.log(`🖱️ Click en categoría: ${category}`);
-					window.history.pushState({ category }, '', `tienda.html?categoria=${category}`);
+					window.history.pushState({ category }, '', `tienda?categoria=${category}`);
 					handleCategoryView(category);
 					return false;
 				});
@@ -652,7 +658,7 @@ function setupCategories() {
 				e.preventDefault();
 				e.stopPropagation();
 				console.log(`🖱️ Click en tarjeta de categoría: ${category}`);
-				window.history.pushState({ category }, '', `tienda.html?categoria=${category}`);
+				window.history.pushState({ category }, '', `tienda?categoria=${category}`);
 				handleCategoryView(category);
 				return false;
 			});
@@ -693,7 +699,7 @@ function handleCategoryClick(e) {
 		e.preventDefault();
 		e.stopPropagation();
 		console.log(`🖱️ Click en enlace de categoría: ${category}`);
-		window.history.pushState({ category }, '', `tienda.html?categoria=${category}`);
+		window.history.pushState({ category }, '', `tienda?categoria=${category}`);
 		handleCategoryView(category);
 		return false;
 	}
@@ -703,7 +709,7 @@ function handleCategoryClick(e) {
 		e.preventDefault();
 		e.stopPropagation();
 		console.log(`🖱️ Click en tarjeta de categoría: ${category}`);
-		window.history.pushState({ category }, '', `tienda.html?categoria=${category}`);
+		window.history.pushState({ category }, '', `tienda?categoria=${category}`);
 		handleCategoryView(category);
 		return false;
 	}
@@ -822,14 +828,40 @@ async function handleCategoryView(category) {
 	}
 	
 	// Mostrar productos del cache INMEDIATAMENTE mientras se cargan desde la API
-	const cachedProducts = PRODUCTS.filter(p => {
-		const productCategory = p.category?.toLowerCase();
-		return productCategory === category.toLowerCase();
+	const slugNorm = String(category).toLowerCase().trim();
+	let cachedProducts = PRODUCTS.filter(p => {
+		const productCategory = p.category != null ? String(p.category).toLowerCase().trim() : null;
+		return productCategory === slugNorm;
 	});
 	
 	if (cachedProducts.length > 0) {
 		console.log(`⚡ Mostrando ${cachedProducts.length} productos del cache inmediatamente`);
 		renderProducts(cachedProducts);
+	}
+
+	// Si el usuario dio click antes de que cargara PRODUCTS, el cache va a estar vacío.
+	// En ese caso, cargamos productos y renderizamos por categoría para evitar "solo se ve la sección de categorías".
+	if (cachedProducts.length === 0) {
+		try {
+			if (PRODUCTS.length === 0) {
+				console.log('⏳ Cache vacío: cargando productos antes de renderizar categoría...');
+				await loadProductsSimple();
+			}
+
+			cachedProducts = PRODUCTS.filter(p => {
+				const productCategory = p.category != null ? String(p.category).toLowerCase().trim() : null;
+				return productCategory === slugNorm;
+			});
+
+			if (cachedProducts.length > 0) {
+				console.log(`✅ Renderizando ${cachedProducts.length} productos después de cargar cache`);
+				renderProducts(cachedProducts);
+			} else {
+				console.warn(`⚠️ Aun así no hay productos en cache para la categoría "${category}"`);
+			}
+		} catch (e) {
+			console.error('❌ Error cargando productos para categoría:', e);
+		}
 	}
 	
 	// Obtener el nombre de la categoría (usar mapeo hardcodeado para evitar delay)
@@ -880,11 +912,11 @@ async function handleCategoryView(category) {
 		// Crear nuevo hero de categoría
 		const categoryHero = document.createElement('section');
 		categoryHero.id = 'categoryHero';
-		categoryHero.className = 'shop-hero';
+		// Reusar el mismo estilo del hero de tienda (font/short tagline)
+		categoryHero.className = 'shop-hero shop-hero-tienda';
 		categoryHero.innerHTML = `
 			<div class="container">
-				<h1 class="display">${categoryName}</h1>
-				<p class="lead">${categoryDescription}</p>
+				<p class="shop-hero-tagline">${categoryName}</p>
 			</div>
 		`;
 		main.insertBefore(categoryHero, shopSection);
@@ -1595,9 +1627,34 @@ async function main() {
 		const productId = urlParams.get('id');
 		const activeCategoryParam = categoria || filterParam;
 
+		// Debug: confirmar qué está recibiendo JS realmente en la URL
+		console.log('🌐 DEBUG tienda URL:', {
+			href: window.location.href,
+			pathname: window.location.pathname,
+			search: window.location.search,
+			categoria: categoria,
+			filter: filterParam,
+			activeCategoryParam
+		});
+
 		// Nombre visible de la categoría (mismo estilo que "Todas las colecciones")
 		const CATEGORY_LABELS = { anillos: 'Anillos', brazaletes: 'Brazaletes', collares: 'Collares', aretes: 'Aretes', broqueles: 'Broqueles', pulseras: 'Pulseras', dijes: 'Dijes', conjuntos: 'Conjuntos' };
 		const productosSectionTitleEl = document.getElementById('productosSectionTitle');
+
+		// Si entramos directo con ?categoria=..., ocultar bento/hero para que se vea el grid
+		if (activeCategoryParam) {
+			// Mostrar sección de productos de inmediato (antes de que termine el fetch)
+			const productosSection = document.getElementById('productos');
+			if (productosSection) productosSection.style.display = 'block';
+
+			const categoriesSection = document.querySelector('.categories');
+			if (categoriesSection) categoriesSection.style.display = 'none';
+
+			const shopHeroTienda = document.querySelector('.shop-hero-tienda');
+			// En algunas variantes el hero puede tener otra clase, pero en esta página existe así
+			if (shopHeroTienda) shopHeroTienda.style.display = 'none';
+		}
+
 		if (productosSectionTitleEl) {
 			if (activeCategoryParam) {
 				const label = CATEGORY_LABELS[activeCategoryParam.toLowerCase()] || activeCategoryParam.charAt(0).toUpperCase() + activeCategoryParam.slice(1).toLowerCase();
@@ -1633,6 +1690,31 @@ async function main() {
 		if (products.length > 0) {
 			console.log(`✅ ${products.length} productos cargados, renderizando con diseño nuevo...`);
 			renderProductsSimple(products);
+
+			// Asegurar que el usuario llegue a la lista (por timing/layout del render)
+			const productosSection = document.getElementById('productos');
+			if (productosSection) {
+				// Reaplicar visibilidad por si algún paso previo deja estilos intermedios
+				if (activeCategoryParam) {
+					const categoriesSection = document.querySelector('.categories');
+					if (categoriesSection) categoriesSection.style.display = 'none';
+				}
+				productosSection.style.display = 'block';
+
+				const tryScroll = (delayMs) => {
+					setTimeout(() => {
+						try {
+							// Si ya está visible, esto no rompe; si no, lo lleva arriba del todo.
+							productosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+						} catch (_) {
+							// no-op
+						}
+					}, delayMs);
+				};
+
+				tryScroll(120);
+				tryScroll(320);
+			}
 		} else {
 			console.error('❌ No se pudieron cargar productos');
 			const grid = document.getElementById('productGrid');
@@ -2208,7 +2290,7 @@ async function renderProductPage() {
   
   if (!productId) {
     // Si no hay ID, redirigir a la tienda
-    window.location.href = 'tienda.html';
+    window.location.href = 'tienda';
     return;
   }
 
@@ -2234,7 +2316,7 @@ async function renderProductPage() {
       <div style="text-align: center; padding: 4rem 2rem;">
         <h2>Producto no encontrado</h2>
         <p>El producto que buscas no está disponible.</p>
-        <a href="tienda.html" class="btn btn-primary" style="margin-top: 1rem;">Volver a la tienda</a>
+        <a href="tienda" class="btn btn-primary" style="margin-top: 1rem;">Volver a la tienda</a>
       </div>
     `;
     return;
