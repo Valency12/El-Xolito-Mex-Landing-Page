@@ -14,6 +14,20 @@ const EXAMPLE_PRODUCTS = [
 	{ id: 8, nombre: 'Brazalete Canasta', precio: 580, material: 'Plata .925', categoria_nombre: 'Brazaletes', categoria_slug: 'brazaletes', destacado: 1, imagenes: [{ ruta: 'assets/Brazaletes/brazalete-canasta.jpg', es_principal: true }], image: 'assets/Brazaletes/brazalete-canasta.jpg', descripcion_corta: 'Brazalete tipo canasta.', color: null, stock: 6 }
 ];
 
+// Placeholder cuando la imagen del producto no existe (ruta 404)
+const PLACEHOLDER_IMAGE = 'assets/placeholder.svg';
+// Imagen de categoría por slug (archivos que sí existen en assets/Categorias/)
+const CATEGORY_IMAGE_BY_SLUG = {
+  anillos: 'assets/Categorias/anillo.png',
+  brazaletes: 'assets/Categorias/brazaletes.png',
+  collares: 'assets/Categorias/collar.png',
+  aretes: 'assets/Categorias/aretes.png',
+  broqueles: 'assets/Categorias/broqueles.png',
+  pulseras: 'assets/Categorias/pulseras.png',
+  dijes: 'assets/Categorias/dije.png',
+  conjuntos: 'assets/Categorias/conjunto.png'
+};
+
 // Función para esperar a que productService esté disponible
 async function waitForProductService(maxAttempts = 50, delay = 200) {
 	console.log('⏳ Esperando a que productService esté disponible...');
@@ -215,10 +229,12 @@ class Cart {
 				// Renderizar los items del carrito
 				cartItems.innerHTML = this.items.map(item => {
 					const itemTotal = formatCurrency(item.price * item.quantity);
+					const fallbackImage = getProductFallbackImage(item);
+					const imageSrc = item.image || fallbackImage;
 					return `
 					<div class="cart-item">
 						<div class="cart-item-media">
-							${item.image ? `<img src="${item.image}" alt="${item.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;" onerror="this.parentElement.innerHTML = '${createPlaceholderSVG(item.id).replace(/'/g, "\\'")}'">` : createPlaceholderSVG(item.id)}
+							<img src="${imageSrc}" alt="${item.name}" data-fallback="${fallbackImage}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 8px;">
 						</div>
 						<div class="cart-item-info">
 							<div class="cart-item-name">${item.name}</div>
@@ -236,6 +252,19 @@ class Cart {
 					</div>
 				`;
 				}).join('');
+
+				// Fallback robusto de imagen en carrito (evita texto extraño como '\">')
+				cartItems.querySelectorAll('.cart-item-media img').forEach((img) => {
+					img.addEventListener('error', function onCartImgError() {
+						img.removeEventListener('error', onCartImgError);
+						const fallback = img.dataset.fallback || PLACEHOLDER_IMAGE;
+						if (img.src.endsWith(fallback)) {
+							img.replaceWith(svgToElement(createPlaceholderSVG('cart')));
+							return;
+						}
+						img.src = fallback;
+					});
+				});
 				
 				// Actualizar el total
 				cartTotal.textContent = formatCurrency(this.getTotal());
@@ -272,6 +301,24 @@ function createPlaceholderSVG(id) {
 			<path d="M40 300 L100 220 L160 300 L220 200 L300 300" fill="none" stroke="#2e694f" stroke-width="10" stroke-linecap="round"/>
 		</svg>
 	`;
+}
+
+function svgToElement(svgString) {
+	const wrapper = document.createElement('div');
+	wrapper.innerHTML = svgString.trim();
+	return wrapper.firstElementChild || document.createElement('div');
+}
+
+function showCartToast(message) {
+	const toast = document.createElement('div');
+	toast.className = 'cart-toast';
+	toast.textContent = `\u2705 ${message}`;
+	document.body.appendChild(toast);
+	requestAnimationFrame(() => toast.classList.add('show'));
+	setTimeout(() => {
+		toast.classList.remove('show');
+		setTimeout(() => toast.remove(), 220);
+	}, 1500);
 }
 
 
@@ -361,20 +408,6 @@ async function loadProductsSimple() {
     return PRODUCTS;
   }
 }
-
-// Placeholder cuando la imagen del producto no existe (ruta 404)
-const PLACEHOLDER_IMAGE = 'assets/placeholder.svg';
-// Imagen de categoría por slug (archivos que sí existen en assets/Categorias/)
-const CATEGORY_IMAGE_BY_SLUG = {
-  anillos: 'assets/Categorias/anillo.png',
-  brazaletes: 'assets/Categorias/brazaletes.png',
-  collares: 'assets/Categorias/collar.png',
-  aretes: 'assets/Categorias/aretes.png',
-  broqueles: 'assets/Categorias/broqueles.png',
-  pulseras: 'assets/Categorias/pulseras.png',
-  dijes: 'assets/Categorias/dije.png',
-  conjuntos: 'assets/Categorias/conjunto.png'
-};
 
 function getProductImageUrl(product) {
   if (product.image) return product.image;
@@ -467,9 +500,9 @@ function renderProductsSimple(products) {
         e.stopPropagation();
         if (typeof cart !== 'undefined' && cart.addItem) {
           cart.addItem(product.id, 1);
-          alert(`✅ ${nombre} agregado al carrito`);
+          showCartToast(`${nombre} agregado al carrito`);
         } else {
-          alert(`✅ ${nombre} agregado al carrito`);
+          showCartToast(`${nombre} agregado al carrito`);
         }
       });
     }
