@@ -3127,8 +3127,12 @@ img{ display:block; max-width:100%; height:auto; }
   background: #fff;
   padding: 3rem 0 4rem;
 }
-.productos-nav{
-  margin-bottom: 1.25rem;
+/* Fila: Volver a la izquierda, título de categoría al centro */
+.productos-header-row{
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
 }
 .productos-back{
   font-family: "GFS Didot", serif;
@@ -3139,6 +3143,7 @@ img{ display:block; max-width:100%; height:auto; }
   text-decoration: none;
   opacity: 0.85;
   transition: opacity 0.2s ease;
+  flex-shrink: 0;
 }
 .productos-back:hover{
   opacity: 1;
@@ -3150,7 +3155,30 @@ img{ display:block; max-width:100%; height:auto; }
   font-weight: 400;
   letter-spacing: 0.02em;
   color: #000;
-  margin: 0 0 1rem 0;
+  margin: 0;
+  flex: 1;
+  text-align: center;
+}
+.productos-header-spacer{
+  flex-shrink: 0;
+  width: 5.5rem;
+  min-width: 5.5rem;
+}
+.productos-header-line{
+  height: 1px;
+  background: #000;
+  margin-top: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+/* Sin línea divisora ni espacio extra: barra de filtros oculta cuando está vacía */
+.productos-section .shop-controls{
+  margin: 0;
+  padding: 0;
+  background: none;
+  min-height: 0;
+}
+.productos-section .shop-controls:empty{
+  display: none !important;
 }
 .productos-section .container{
   width: min(1400px, 94vw);
@@ -3247,6 +3275,29 @@ img{ display:block; max-width:100%; height:auto; }
   color: #666;
   font-family: "GFS Didot", serif;
   grid-column: 1 / -1;
+}
+.tienda-loading{
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+  padding: 3rem 1rem;
+  color: #666;
+  font-family: "GFS Didot", serif;
+  font-size: 1rem;
+}
+.tienda-loading::before{
+  content: "";
+  width: 24px;
+  height: 24px;
+  border: 2px solid #eee;
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: tienda-spin 0.8s linear infinite;
+  margin-right: 0.75rem;
+}
+@keyframes tienda-spin{
+  to { transform: rotate(360deg); }
 }
 @media (max-width: 720px){
   .tienda-product-grid{

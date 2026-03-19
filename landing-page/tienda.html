@@ -115,11 +115,13 @@
 
     <section id="productos" class="productos-section" style="display: none;">
       <div class="container">
-        <nav class="productos-nav" aria-label="Navegación de productos">
-          <a href="tienda" class="productos-back">← Volver a categorías</a>
-        </nav>
-        <h2 class="productos-section-title" id="productosSectionTitle" aria-hidden="true"></h2>
-        <div class="shop-controls" style="display: flex; gap: 1rem; margin-bottom: 1rem; flex-wrap: wrap;"></div>
+        <div class="productos-header-row">
+          <a href="tienda" class="productos-back" aria-label="Volver a categorías">← Volver</a>
+          <h2 class="productos-section-title" id="productosSectionTitle" aria-hidden="true"></h2>
+          <span class="productos-header-spacer" aria-hidden="true"></span>
+        </div>
+        <div class="productos-header-line" aria-hidden="true"></div>
+        <div class="shop-controls" aria-hidden="true"></div>
         <div id="productGrid"></div>
       </div>
     </section>

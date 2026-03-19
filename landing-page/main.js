@@ -389,6 +389,14 @@ function getProductFallbackImage(product) {
   return CATEGORY_IMAGE_BY_SLUG[slug] || PLACEHOLDER_IMAGE;
 }
 
+// Mostrar estado "Cargando productos..." en el grid (feedback inmediato para el usuario)
+function showProductGridLoading() {
+  const grid = document.getElementById('productGrid');
+  if (!grid) return;
+  grid.className = '';
+  grid.innerHTML = '<p class="tienda-loading">Cargando productos…</p>';
+}
+
 // Función simple para renderizar productos con diseño nuevo
 function renderProductsSimple(products) {
   const grid = document.getElementById('productGrid');
@@ -820,11 +828,21 @@ async function handleCategoryView(category) {
 	} else {
 		console.error('❌ No se encontró la sección de productos');
 	}
-	
-	// Mostrar los filtros (chips) y el buscador para que el usuario pueda filtrar
+
+	// Título de la categoría visible en todas las categorías (Anillos, Brazaletes, Pulseras, etc.)
+	const CATEGORY_LABELS_VIEW = { anillos: 'Anillos', brazaletes: 'Brazaletes', collares: 'Collares', aretes: 'Aretes', broqueles: 'Broqueles', pulseras: 'Pulseras', dijes: 'Dijes', conjuntos: 'Conjuntos' };
+	const titleEl = document.getElementById('productosSectionTitle');
+	if (titleEl) {
+		const label = CATEGORY_LABELS_VIEW[category.toLowerCase()] || (category.charAt(0).toUpperCase() + category.slice(1).toLowerCase());
+		titleEl.textContent = label;
+		titleEl.style.display = 'block';
+		titleEl.removeAttribute('aria-hidden');
+	}
+
+	// Ocultar barra de filtros vacía para no dejar línea/espacio
 	const shopControls = document.querySelector('.shop-controls');
 	if (shopControls) {
-		shopControls.style.display = 'flex';
+		shopControls.style.display = shopControls.querySelector('.filters, .search, [class*="filter"]') ? 'flex' : 'none';
 	}
 	
 	// Mostrar productos del cache INMEDIATAMENTE mientras se cargan desde la API
@@ -1576,27 +1594,22 @@ async function main() {
 	setupYear();
 	setupHashNavigation();
 	
-	// Cargar productos desde la API al inicio
-	console.log('🔄 Iniciando carga de productos...');
-	console.log('🔍 Verificando productService antes de cargar...');
-	console.log('   window.productService existe:', typeof window.productService !== 'undefined');
-	
-	const loadedProducts = await loadProductsFromAPI();
-	console.log(`📦 Productos en cache después de carga: ${PRODUCTS.length}`);
-	
-	if (PRODUCTS.length === 0) {
-		console.warn('⚠️ No hay productos desde la API, usando productos de ejemplo');
-		PRODUCTS = EXAMPLE_PRODUCTS.map(p => window.productService && window.productService.formatProductForFrontend ? window.productService.formatProductForFrontend(p) : { id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color });
-	} else {
-		console.log(`✅ ${PRODUCTS.length} productos cargados exitosamente`);
-		console.log('   Categorías:', [...new Set(PRODUCTS.map(p => p.category))]);
+	// En la tienda no esperamos a productService: los productos se cargan con loadProductsSimple() (fetch directo).
+	// Solo en home (y otras páginas con carrusel) pre-cargamos vía loadProductsFromAPI para no bloquear la tienda.
+	if (!document.getElementById('productGrid')) {
+		console.log('🔄 Iniciando carga de productos (página principal)...');
+		const loadedProducts = await loadProductsFromAPI();
+		console.log(`📦 Productos en cache después de carga: ${PRODUCTS.length}`);
+		if (PRODUCTS.length === 0) {
+			console.warn('⚠️ No hay productos desde la API, usando productos de ejemplo');
+			PRODUCTS = EXAMPLE_PRODUCTS.map(p => window.productService && window.productService.formatProductForFrontend ? window.productService.formatProductForFrontend(p) : { id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color });
+		} else {
+			console.log(`✅ ${PRODUCTS.length} productos cargados exitosamente`);
+		}
+		if (PRODUCTS.length > 0) {
+			renderFeaturedCarousel();
+		}
 	}
-	
-	// Si hay productos cargados, renderizar el carrusel de destacados
-	if (PRODUCTS.length > 0) {
-		renderFeaturedCarousel();
-	}
-	
 	console.log('main() function completed');
 
 	// Check if we're on the product page
@@ -1608,53 +1621,26 @@ async function main() {
 	// Check if we're on the shop page
 	if (document.getElementById('productGrid')) {
 		console.log('🏪 Página de tienda detectada - Cargando productos con diseño nuevo');
-		
-		// Cargar categorías desde la API primero
-		const categoriesLoaded = await loadCategoriesFromAPI();
-		// SIEMPRE configurar los event listeners, incluso si las categorías se cargaron desde la API
-		if (!categoriesLoaded) {
-			setupCategories();
-		} else {
-			setTimeout(() => {
-				setupCategories();
-			}, 100);
-		}
-		
-		// Obtener parámetros de la URL primero
+
+		// 1) Leer URL y aplicar vista de categoría INMEDIATAMENTE (sin esperar nada)
+		//    Así nunca se ve bento + productos debajo; si hay ?categoria= solo se ve el grid.
 		const urlParams = new URLSearchParams(window.location.search);
 		const categoria = urlParams.get('categoria');
 		const filterParam = urlParams.get('filter');
 		const productId = urlParams.get('id');
 		const activeCategoryParam = categoria || filterParam;
 
-		// Debug: confirmar qué está recibiendo JS realmente en la URL
-		console.log('🌐 DEBUG tienda URL:', {
-			href: window.location.href,
-			pathname: window.location.pathname,
-			search: window.location.search,
-			categoria: categoria,
-			filter: filterParam,
-			activeCategoryParam
-		});
-
-		// Nombre visible de la categoría (mismo estilo que "Todas las colecciones")
 		const CATEGORY_LABELS = { anillos: 'Anillos', brazaletes: 'Brazaletes', collares: 'Collares', aretes: 'Aretes', broqueles: 'Broqueles', pulseras: 'Pulseras', dijes: 'Dijes', conjuntos: 'Conjuntos' };
 		const productosSectionTitleEl = document.getElementById('productosSectionTitle');
 
-		// Si entramos directo con ?categoria=..., ocultar bento/hero para que se vea el grid
 		if (activeCategoryParam) {
-			// Mostrar sección de productos de inmediato (antes de que termine el fetch)
 			const productosSection = document.getElementById('productos');
 			if (productosSection) productosSection.style.display = 'block';
-
 			const categoriesSection = document.querySelector('.categories');
 			if (categoriesSection) categoriesSection.style.display = 'none';
-
 			const shopHeroTienda = document.querySelector('.shop-hero-tienda');
-			// En algunas variantes el hero puede tener otra clase, pero en esta página existe así
 			if (shopHeroTienda) shopHeroTienda.style.display = 'none';
 		}
-
 		if (productosSectionTitleEl) {
 			if (activeCategoryParam) {
 				const label = CATEGORY_LABELS[activeCategoryParam.toLowerCase()] || activeCategoryParam.charAt(0).toUpperCase() + activeCategoryParam.slice(1).toLowerCase();
@@ -1667,61 +1653,57 @@ async function main() {
 			}
 		}
 
-		// Cargar y mostrar productos
+		// 2) Configurar clicks de categorías con el HTML estático (no esperar a la API de categorías)
+		setupCategories();
+
+		// 3) Cargar productos (siempre, para tener cache al hacer click en una categoría)
 		console.log('🔄 Cargando productos desde la API para mostrar...');
 		let products = await loadProductsSimple();
 
-		// Filtrar por categoría si está en la URL (comparación normalizada)
-		if (activeCategoryParam && products.length > 0) {
-			const slugNorm = String(activeCategoryParam).toLowerCase().trim();
-			const filteredProducts = products.filter(p => {
-				const pc = p.categoria_slug || p.categoria || p.category;
-				return pc != null && String(pc).toLowerCase().trim() === slugNorm;
-			});
-			if (filteredProducts.length > 0) {
-				console.log(`✅ ${filteredProducts.length} productos filtrados por categoría "${activeCategoryParam}"`);
-				products = filteredProducts;
-			} else {
-				console.warn(`⚠️ No se encontraron productos para la categoría "${activeCategoryParam}"`);
-			}
-		}
-
-		// Renderizar productos (filtrados o todos)
-		if (products.length > 0) {
-			console.log(`✅ ${products.length} productos cargados, renderizando con diseño nuevo...`);
-			renderProductsSimple(products);
-
-			// Asegurar que el usuario llegue a la lista (por timing/layout del render)
+		// 4) Solo mostrar el grid cuando hay categoría en la URL. Sin categoría = solo bento, sin productos debajo.
+		if (!activeCategoryParam) {
 			const productosSection = document.getElementById('productos');
-			if (productosSection) {
-				// Reaplicar visibilidad por si algún paso previo deja estilos intermedios
-				if (activeCategoryParam) {
+			if (productosSection) productosSection.style.display = 'none';
+		} else {
+			// Filtrar por categoría
+			if (products.length > 0) {
+				const slugNorm = String(activeCategoryParam).toLowerCase().trim();
+				const filteredProducts = products.filter(p => {
+					const pc = p.categoria_slug || p.categoria || p.category;
+					return pc != null && String(pc).toLowerCase().trim() === slugNorm;
+				});
+				if (filteredProducts.length > 0) {
+					console.log(`✅ ${filteredProducts.length} productos filtrados por categoría "${activeCategoryParam}"`);
+					products = filteredProducts;
+				} else {
+					console.warn(`⚠️ No se encontraron productos para la categoría "${activeCategoryParam}"`);
+				}
+			}
+
+			if (products.length > 0) {
+				console.log(`✅ ${products.length} productos cargados, renderizando con diseño nuevo...`);
+				renderProductsSimple(products);
+				const productosSection = document.getElementById('productos');
+				if (productosSection) {
+					productosSection.style.display = 'block';
 					const categoriesSection = document.querySelector('.categories');
 					if (categoriesSection) categoriesSection.style.display = 'none';
+					setTimeout(() => productosSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
 				}
-				productosSection.style.display = 'block';
-
-				const tryScroll = (delayMs) => {
-					setTimeout(() => {
-						try {
-							// Si ya está visible, esto no rompe; si no, lo lleva arriba del todo.
-							productosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-						} catch (_) {
-							// no-op
-						}
-					}, delayMs);
-				};
-
-				tryScroll(120);
-				tryScroll(320);
-			}
-		} else {
-			console.error('❌ No se pudieron cargar productos');
-			const grid = document.getElementById('productGrid');
-			if (grid) {
-				grid.innerHTML = '<p style="text-align: center; padding: 2rem; color: #666;">No se pudieron cargar los productos. Verifica que el servidor backend esté corriendo en http://localhost:3000</p>';
+			} else {
+				const grid = document.getElementById('productGrid');
+				const productosSection = document.getElementById('productos');
+				if (productosSection) productosSection.style.display = 'block';
+				if (grid) grid.innerHTML = '<p class="tienda-empty">No se encontraron productos para esta categoría.</p>';
 			}
 		}
+
+		// Categorías desde la API en segundo plano (no bloquea la carga de productos)
+		loadCategoriesFromAPI().then(function (categoriesLoaded) {
+			if (categoriesLoaded) {
+				setTimeout(setupCategories, 50);
+			}
+		});
 		
 		// Abrir modal de producto si hay ID en la URL
 		if (productId) {
