@@ -256,8 +256,9 @@ function formatCurrency(mx) {
 
 function createPlaceholderSVG(id) {
 	const palette = ['#e8d79c', '#2a868f', '#2e694f', '#e7509d'];
-	const a = palette[id.charCodeAt(0) % palette.length];
-	const b = palette[id.charCodeAt(1) % palette.length];
+	const key = String(id || '00');
+	const a = palette[key.charCodeAt(0) % palette.length];
+	const b = palette[key.charCodeAt(Math.min(1, key.length - 1)) % palette.length];
 	return `
 		<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" role="img" aria-label="Imagen del producto">
 			<defs>
@@ -504,36 +505,57 @@ if (productCloseBtn) {
 }
 
 function renderFeaturedCarousel() {
-  // Asegurar que los productos estén cargados
+  // Mantener el formato del carrusel de landing (.piezas-des-slide)
+  // para no romper estilos/animación de la sección "Piezas Destacadas".
   if (PRODUCTS.length === 0) {
     console.warn('No hay productos cargados para mostrar en el carrusel');
     return;
   }
-  const featured = PRODUCTS.filter(p => p.featured);
+
   const container = document.getElementById('featuredCarousel');
   if (!container) return;
 
-  // Duplica los productos para el loop
-  const items = [...featured, ...featured];
+  const featured = PRODUCTS.filter(p => p.featured);
+  if (!featured.length) {
+    console.warn('No hay productos destacados; se conserva el carrusel estático');
+    return;
+  }
 
   container.innerHTML = '';
   const frag = document.createDocumentFragment();
 
-  for (const p of items) {
-    const item = document.createElement('article');
-    item.className = 'featured-item';
-    item.innerHTML = `
-      <div class="card-media">
-        ${p.image ? `<img class="card-bg" src="${p.image.replace(/^\//, '')}" alt="${p.name}">` : createPlaceholderSVG(p.id)}
-        <div class="card-body">
-          <h3>${p.name}</h3>
-          <div class="price">${formatCurrency(p.price)}</div>
-        </div>
-        <button class="btn btn-outline featured-btn" onclick="addToCartFromFeatured('${p.id}')">Agregar al carrito</button>
+  for (const p of featured) {
+    const name = p.name || p.nombre || 'Producto destacado';
+    const price = (p.price != null ? p.price : p.precio) || 0;
+    const materials = p.material || 'Plata .925';
+    const imageUrl = getProductImageUrl(p);
+    const fallbackUrl = getProductFallbackImage(p);
+
+    const slide = document.createElement('div');
+    slide.className = 'piezas-des-slide';
+    slide.innerHTML = `
+      <div class="piezas-des-image-container">
+        <img src="${imageUrl}" alt="${name}" data-fallback="${fallbackUrl}">
+      </div>
+      <div class="piezas-des-info">
+        <h3 class="piezas-des-name">${name}</h3>
+        <p class="piezas-des-materials">${materials}</p>
+        <p class="piezas-des-price">${formatCurrency(price)}</p>
+        <button class="btn piezas-des-button" onclick="window.location.href='producto.html?id=${p.id}'">Ver en la tienda</button>
       </div>
     `;
-    frag.appendChild(item);
+
+    const img = slide.querySelector('img');
+    if (img) {
+      img.addEventListener('error', function onImgError() {
+        img.removeEventListener('error', onImgError);
+        img.src = img.dataset.fallback || PLACEHOLDER_IMAGE;
+      });
+    }
+
+    frag.appendChild(slide);
   }
+
   container.appendChild(frag);
 }
 
@@ -982,7 +1004,8 @@ async function handleCategoryView(category) {
 	// Scroll a la sección de productos inmediatamente
 	setTimeout(() => {
 		if (productosSection) {
-			productosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+			const headerAnchor = document.querySelector('.productos-header-row');
+			(headerAnchor || productosSection).scrollIntoView({ behavior: 'smooth', block: 'start' });
 		}
 	}, 100);
 }
@@ -1688,7 +1711,10 @@ async function main() {
 					productosSection.style.display = 'block';
 					const categoriesSection = document.querySelector('.categories');
 					if (categoriesSection) categoriesSection.style.display = 'none';
-					setTimeout(() => productosSection.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+					setTimeout(() => {
+						const headerAnchor = document.querySelector('.productos-header-row');
+						(headerAnchor || productosSection).scrollIntoView({ behavior: 'smooth', block: 'start' });
+					}, 150);
 				}
 			} else {
 				const grid = document.getElementById('productGrid');

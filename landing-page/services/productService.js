@@ -1,8 +1,6 @@
 // Servicio de productos - Conecta con la API del backend
-// Nota: este archivo puede ejecutarse más de una vez en algunas cargas (por ejemplo, navegación / recargas),
-// así que usamos `var` para evitar el error "Identifier ... has already been declared".
-var API_BASE_URL = window.API_BASE_URL || 'http://localhost:3000/api';
-window.API_BASE_URL = API_BASE_URL;
+// Nombre específico para no colisionar con authService.js (también declara API_BASE_URL).
+const PRODUCT_API_BASE_URL = 'http://localhost:3000/api';
 
 // Función para hacer requests a la API
 async function apiRequest(endpoint, options = {}) {
@@ -17,8 +15,8 @@ async function apiRequest(endpoint, options = {}) {
   };
 
   try {
-    console.log(`🌐 Haciendo petición a: ${API_BASE_URL}${endpoint}`);
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    console.log(`🌐 Haciendo petición a: ${PRODUCT_API_BASE_URL}${endpoint}`);
+    const response = await fetch(`${PRODUCT_API_BASE_URL}${endpoint}`, config);
     
     if (!response.ok) {
       console.error(`❌ Error HTTP: ${response.status} ${response.statusText}`);

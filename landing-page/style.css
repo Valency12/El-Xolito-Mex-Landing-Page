@@ -3125,7 +3125,8 @@ img{ display:block; max-width:100%; height:auto; }
 /* Lista de productos (tienda) */
 .productos-section{
   background: #fff;
-  padding: 3rem 0 4rem;
+  padding: 2rem 0 4rem;
+  scroll-margin-top: 110px;
 }
 /* Fila: Volver a la izquierda, título de categoría al centro */
 .productos-header-row{
@@ -3133,6 +3134,7 @@ img{ display:block; max-width:100%; height:auto; }
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  scroll-margin-top: 110px;
 }
 .productos-back{
   font-family: "GFS Didot", serif;
