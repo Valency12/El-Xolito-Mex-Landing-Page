@@ -12,7 +12,15 @@ const ordersRouter = require('./routes/orders');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors({ origin: true, credentials: true }));
+// Producción: CORS_ORIGINS=https://tudominio.com,https://www.tudominio.com
+const corsOrigins = process.env.CORS_ORIGINS;
+const corsOptions = corsOrigins
+  ? {
+      origin: corsOrigins.split(',').map((s) => s.trim()).filter(Boolean),
+      credentials: true
+    }
+  : { origin: true, credentials: true };
+app.use(cors(corsOptions));
 app.use(express.json());
 
 // API

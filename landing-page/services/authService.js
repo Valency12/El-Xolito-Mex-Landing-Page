@@ -1,5 +1,11 @@
 // Servicio de autenticación - Conecta con la API del backend
-const API_BASE_URL = 'http://localhost:3000/api';
+// URL: landing-page/config.js (o window.__EL_XOLITO_API__ antes de cargar este script)
+function getApiBaseUrl() {
+  if (typeof window !== 'undefined' && typeof window.getElXolitoApiBase === 'function') {
+    return window.getElXolitoApiBase();
+  }
+  return 'http://localhost:3000/api';
+}
 
 // Función para hacer requests a la API
 async function apiRequest(endpoint, options = {}) {
@@ -14,7 +20,7 @@ async function apiRequest(endpoint, options = {}) {
   };
 
   try {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
+    const response = await fetch(`${getApiBaseUrl()}${endpoint}`, config);
     const data = await response.json();
 
     if (!response.ok) {
@@ -24,7 +30,7 @@ async function apiRequest(endpoint, options = {}) {
         if (refreshed) {
           // Reintentar la petición con el nuevo token
           config.headers['Authorization'] = `Bearer ${localStorage.getItem('accessToken')}`;
-          const retryResponse = await fetch(`${API_BASE_URL}${endpoint}`, config);
+          const retryResponse = await fetch(`${getApiBaseUrl()}${endpoint}`, config);
           const retryData = await retryResponse.json();
           return retryData;
         }
@@ -146,7 +152,7 @@ async function refreshToken() {
       return false;
     }
 
-    const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+    const response = await fetch(`${getApiBaseUrl()}/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -191,7 +197,7 @@ async function checkoutFromLocalCart(localItems) {
   };
 
   try {
-    const clearRes = await fetch(`${API_BASE_URL}/cart`, { method: 'DELETE', headers });
+    const clearRes = await fetch(`${getApiBaseUrl()}/cart`, { method: 'DELETE', headers });
     const clearData = await clearRes.json().catch(() => ({}));
     if (!clearRes.ok && clearRes.status !== 404) {
       return { success: false, message: clearData.message || 'No se pudo preparar el carrito' };
@@ -203,7 +209,7 @@ async function checkoutFromLocalCart(localItems) {
         return { success: false, message: 'Hay un producto en el carrito con un identificador no válido' };
       }
       const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
-      const res = await fetch(`${API_BASE_URL}/cart/items`, {
+      const res = await fetch(`${getApiBaseUrl()}/cart/items`, {
         method: 'POST',
         headers,
         body: JSON.stringify({ producto_id: pid, cantidad: qty })
@@ -217,7 +223,7 @@ async function checkoutFromLocalCart(localItems) {
       }
     }
 
-    const orderRes = await fetch(`${API_BASE_URL}/orders`, {
+    const orderRes = await fetch(`${getApiBaseUrl()}/orders`, {
       method: 'POST',
       headers,
       body: JSON.stringify({})
@@ -232,10 +238,14 @@ async function checkoutFromLocalCart(localItems) {
     return { success: true, data: orderData.data || orderData };
   } catch (e) {
     console.error('checkoutFromLocalCart:', e);
-    return {
-      success: false,
-      message: e.message || 'Error de conexión al procesar el pago'
-    };
+    const isNetwork =
+      e?.name === 'TypeError' ||
+      (typeof e?.message === 'string' &&
+        (e.message === 'Failed to fetch' || e.message.includes('NetworkError') || e.message.includes('fetch')));
+    const message = isNetwork
+      ? 'No hay conexión con el servidor. Comprueba tu internet, que la API esté activa y CORS en producción.'
+      : (e.message || 'Error de conexión al procesar el pago');
+    return { success: false, message };
   }
 }
 

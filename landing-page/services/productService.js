@@ -1,10 +1,16 @@
 // Servicio de productos - Conecta con la API del backend
-// Nombre específico para no colisionar con authService.js (también declara API_BASE_URL).
-const PRODUCT_API_BASE_URL = 'http://localhost:3000/api';
+// URL: landing-page/config.js (cargar antes de este script)
+function getProductApiBase() {
+  if (typeof window !== 'undefined' && typeof window.getElXolitoApiBase === 'function') {
+    return window.getElXolitoApiBase();
+  }
+  return 'http://localhost:3000/api';
+}
 
 // Función para hacer requests a la API
 async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('accessToken');
+  const base = getProductApiBase();
   
   const config = {
     headers: {
@@ -15,8 +21,8 @@ async function apiRequest(endpoint, options = {}) {
   };
 
   try {
-    console.log(`🌐 Haciendo petición a: ${PRODUCT_API_BASE_URL}${endpoint}`);
-    const response = await fetch(`${PRODUCT_API_BASE_URL}${endpoint}`, config);
+    console.log(`🌐 Haciendo petición a: ${base}${endpoint}`);
+    const response = await fetch(`${base}${endpoint}`, config);
     
     if (!response.ok) {
       console.error(`❌ Error HTTP: ${response.status} ${response.statusText}`);
@@ -34,7 +40,7 @@ async function apiRequest(endpoint, options = {}) {
     return data;
   } catch (error) {
     console.error(`❌ Error en API request a ${endpoint}:`, error);
-    console.error('   Verifica que el servidor backend esté corriendo en http://localhost:3000');
+    console.error('   Verifica config.js / __EL_XOLITO_API__ y que el backend esté en marcha');
     throw error;
   }
 }

@@ -1272,12 +1272,15 @@ img{ display:block; max-width:100%; height:auto; }
   transform: translateY(-5px);
   box-shadow: 0 12px 40px rgba(0,0,0,0.15);
 }
-.offer-card img {
+.offer-card img,
+.offer-card .offer-image {
   opacity: 1;
   display: block;
   width: 100%;
   height: auto;
   border-radius: 12px;
+  /* Recorte ligero: esquina inferior/derecha (p. ej. marca de agua en la imagen) */
+  clip-path: inset(0 3% 6% 0);
 }
 .offer-badge{ 
   position:absolute; top:1rem; right:1rem; background:var(--rojo); color:#fff; 

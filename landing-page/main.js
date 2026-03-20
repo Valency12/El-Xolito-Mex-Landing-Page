@@ -14,6 +14,14 @@ const EXAMPLE_PRODUCTS = [
 	{ id: 8, nombre: 'Brazalete Canasta', precio: 580, material: 'Plata .925', categoria_nombre: 'Brazaletes', categoria_slug: 'brazaletes', destacado: 1, imagenes: [{ ruta: 'assets/Brazaletes/brazalete-canasta.jpg', es_principal: true }], image: 'assets/Brazaletes/brazalete-canasta.jpg', descripcion_corta: 'Brazalete tipo canasta.', color: null, stock: 6 }
 ];
 
+/** Base API (config.js debe cargarse antes de main.js como script clásico) */
+function getElXolitoApiBaseForMain() {
+	if (typeof window !== 'undefined' && typeof window.getElXolitoApiBase === 'function') {
+		return window.getElXolitoApiBase();
+	}
+	return 'http://localhost:3000/api';
+}
+
 /**
  * Carrusel de la landing: imágenes reales en /assets y copy alineado a la marca.
  * Los productId enlazan al detalle cuando existen en la API / ejemplo.
@@ -100,12 +108,12 @@ async function loadProductsFromAPI() {
 		if (!serviceAvailable) {
 			console.error('❌ productService no está disponible después de esperar 10 segundos');
 			console.error('   Verifica que services/productService.js se esté cargando correctamente');
-			console.error('   Asegúrate de que el servidor backend esté corriendo en http://localhost:3000');
+			console.error('   Asegúrate de que el backend esté en marcha y config.js apunte a la API correcta');
 			return [];
 		}
 		
 		console.log('✅ productService disponible, haciendo petición a la API...');
-		console.log('🔗 URL de la API: http://localhost:3000/api/products?activo=1');
+		console.log('🔗 URL de la API:', `${getElXolitoApiBaseForMain()}/products?activo=1`);
 		
 		const result = await window.productService.getAllProducts({ activo: '1' });
 		console.log('📦 Respuesta de la API recibida');
@@ -137,8 +145,8 @@ async function loadProductsFromAPI() {
 		console.error('   Mensaje:', error.message);
 		console.error('   Stack:', error.stack);
 		console.error('   Verifica:');
-		console.error('   1. ¿El servidor backend está corriendo? http://localhost:3000');
-		console.error('   2. ¿La API está respondiendo? Prueba: http://localhost:3000/api/products');
+		console.error('   1. ¿El backend está corriendo?', getElXolitoApiBaseForMain());
+		console.error('   2. ¿La API responde? Prueba:', `${getElXolitoApiBaseForMain()}/products`);
 		console.error('   3. ¿Hay errores de CORS?');
 		// En caso de error, retornar array vacío para evitar errores
 		return [];
@@ -409,12 +417,13 @@ async function loadProductsSimple() {
   try {
     console.log('🔄 Cargando productos desde la API...');
     
-    const response = await fetch('http://localhost:3000/api/products?activo=1');
+    const apiBase = getElXolitoApiBaseForMain();
+    const response = await fetch(`${apiBase}/products?activo=1`);
     
     // Verificar si el servidor está respondiendo
     if (!response.ok) {
       if (response.status === 0 || response.status >= 500) {
-        throw new Error(`El servidor backend no está respondiendo (status: ${response.status}). Verifica que esté corriendo en http://localhost:3000`);
+        throw new Error(`El servidor backend no está respondiendo (status: ${response.status}). Revisa la URL en config.js y que el API esté activo`);
       }
       throw new Error(`HTTP error! status: ${response.status}`);
     }
