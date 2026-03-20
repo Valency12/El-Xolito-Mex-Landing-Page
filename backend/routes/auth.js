@@ -31,6 +31,20 @@ function sanitizeUser(row) {
   };
 }
 
+/** Misma regla que el cliente: mín. 8 caracteres, mayúscula, minúscula y número */
+function validatePasswordStrength(password) {
+  if (typeof password !== 'string') {
+    return 'La contraseña no es válida';
+  }
+  if (password.length < 8) {
+    return 'La contraseña debe tener al menos 8 caracteres';
+  }
+  if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(password)) {
+    return 'La contraseña debe incluir mayúscula, minúscula y un número';
+  }
+  return null;
+}
+
 // POST /api/auth/register
 router.post('/register', (req, res) => {
   try {
@@ -40,6 +54,17 @@ router.post('/register', (req, res) => {
         success: false,
         message: 'Faltan email y/o contraseña'
       });
+    }
+    const nombreTrim = String(nombre_completo || '').trim();
+    if (nombreTrim.length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Indica tu nombre completo (al menos 2 caracteres)'
+      });
+    }
+    const pwdErr = validatePasswordStrength(password);
+    if (pwdErr) {
+      return res.status(400).json({ success: false, message: pwdErr });
     }
     const emailNorm = String(email).trim().toLowerCase();
     const existing = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(emailNorm);
@@ -54,7 +79,7 @@ router.post('/register', (req, res) => {
       .prepare(
         'INSERT INTO usuarios (email, password_hash, nombre_completo, telefono) VALUES (?, ?, ?, ?)'
       )
-      .run(emailNorm, password_hash, (nombre_completo || '').trim() || null, (telefono || '').trim() || null);
+      .run(emailNorm, password_hash, nombreTrim, (telefono || '').trim() || null);
     const user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(result.lastInsertRowid);
     const payload = { userId: user.id, email: user.email };
     const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });

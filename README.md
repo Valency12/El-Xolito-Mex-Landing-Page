@@ -33,9 +33,14 @@ python3 -m http.server 8080
 ```
 
 - Abre en el navegador: **http://localhost:8080** (o el puerto que uses).
-- Para la tienda: **http://localhost:8080/tienda.html**.
+- Para la tienda: **http://localhost:8080/tienda** (sin `.html` para conservar parámetros como `?categoria=anillos`).
 
 **Importante:** el frontend llama a la API en `http://localhost:3000`. Si no levantas el backend, la tienda usará productos de ejemplo.
+
+### Registro y pago (checkout)
+
+- **Registro / login:** formularios en la landing (`index.html`) y modales en **tienda** y **producto** (icono de perfil). Contraseña: mínimo 8 caracteres, mayúscula, minúscula y número (validado en cliente y servidor).
+- **Proceder al pago:** requiere **sesión iniciada**. Si no hay cuenta, se abre el login; al iniciar sesión o registrarse se sincroniza el carrito local con el backend y se crea un pedido (`POST /api/orders`). El backend debe estar en marcha y los productos del carrito deben existir en la base (IDs alineados con la API).
 
 ### Resumen rápido
 
@@ -43,4 +48,4 @@ python3 -m http.server 8080
 |---------------------|------------------------|
 | `cd backend && npm install && npm run db:init && npm start` | `cd landing-page && npx serve -l 8080` |
 
-Luego abre: **http://localhost:8080** (inicio) o **http://localhost:8080/tienda.html** (tienda).
+Luego abre: **http://localhost:8080** (inicio) o **http://localhost:8080/tienda** (tienda).

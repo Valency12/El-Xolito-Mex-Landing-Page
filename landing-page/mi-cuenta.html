@@ -3,13 +3,21 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Producto – El Xolito Mex</title>
+  <title>Mi cuenta – El Xolito Mex</title>
+  <meta name="description" content="Tu perfil y pedidos en El Xolito Mex." />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=GFS+Didot&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
+  <script src="services/authService.js"></script>
+  <script>
+    if (!window.authService || !window.authService.isAuthenticated()) {
+      window.location.replace('tienda');
+    }
+  </script>
+
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand" href="index.html" aria-label="El Xolito Mex">
@@ -43,11 +51,20 @@
     <div class="border-mex"></div>
   </header>
 
-  <main>
-    <div id="productContent"></div>
+  <main id="miCuentaPage" class="account-page">
+    <div class="container account-container">
+      <a href="#" id="accountLogout" class="account-logout">Cerrar sesión</a>
+      <h1 class="account-title">Mi cuenta</h1>
+      <p class="account-greeting" id="accountGreeting">Cargando…</p>
+      <p class="account-email" id="accountEmailLine" hidden></p>
+      <h2 class="account-section-title">Mis órdenes</h2>
+      <hr class="account-divider" />
+      <p id="ordersLoading" class="account-orders-loading">Cargando tus órdenes…</p>
+      <div id="ordersList" class="account-orders-list" hidden></div>
+      <p id="ordersEmpty" class="account-empty" hidden>No has hecho ninguna orden todavía.</p>
+    </div>
   </main>
 
-  <!-- Login Modal -->
   <div id="loginModal" class="auth-modal" aria-hidden="true">
     <div class="auth-overlay"></div>
     <div class="auth-dialog">
@@ -87,7 +104,6 @@
     </div>
   </div>
 
-  <!-- Register Modal -->
   <div id="registerModal" class="auth-modal" aria-hidden="true">
     <div class="auth-overlay"></div>
     <div class="auth-dialog">
@@ -160,7 +176,6 @@
     </div>
   </div>
 
-  <script src="services/authService.js"></script>
   <script src="services/productService.js"></script>
   <script type="module" src="main.js"></script>
 </body>

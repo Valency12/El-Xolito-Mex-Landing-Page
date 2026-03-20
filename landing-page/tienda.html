@@ -20,7 +20,7 @@
         <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
         <ul class="nav-list">
           <li><a href="index.html">Inicio</a></li>
-          <li><a href="tienda.html">Tienda</a></li>
+          <li><a href="tienda">Tienda</a></li>
           <li><a href="index.html#ofertas">Ofertas</a></li>
           <li><a href="index.html#nosotros">Nosotros</a></li>
           <li><a href="index.html#contacto">Contacto</a></li>
@@ -28,8 +28,9 @@
       </nav>
       <div class="header-actions">
         <div class="auth-buttons" id="authButtonsContainer"></div>
-        <button class="profile-toggle" id="profileToggle" aria-label="Mi cuenta">
-          <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-person" viewBox="0 0 16 16">
+        <button type="button" class="profile-toggle" id="profileToggle" aria-label="Mi cuenta">
+          <span class="profile-greeting" id="profileGreeting" hidden></span>
+          <svg class="profile-icon-svg" xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true">
             <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0m4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4m-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10s-3.516.68-4.168 1.332c-.678.678-.83 1.418-.832 1.664z"/>
           </svg>
         </button>
@@ -127,6 +128,95 @@
     </section>
   </main>
 
+  <!-- Login Modal -->
+  <div id="loginModal" class="auth-modal" aria-hidden="true">
+    <div class="auth-overlay"></div>
+    <div class="auth-dialog">
+      <div class="auth-header">
+        <h3>Iniciar sesión</h3>
+        <button class="auth-close" aria-label="Cerrar">×</button>
+      </div>
+      <div class="auth-content">
+        <p id="loginContextHint" class="auth-context-hint" hidden></p>
+        <form class="auth-form">
+          <div class="form-group">
+            <label for="loginEmail">Email</label>
+            <input type="email" id="loginEmail" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="loginPassword">Contraseña</label>
+            <input type="password" id="loginPassword" required autocomplete="current-password">
+          </div>
+          <div style="text-align: right; margin-bottom: 1rem;">
+            <a href="#" onclick="showForgotPassword(); return false;" style="color: #d4af37; text-decoration: none; font-size: 0.9rem;">¿Olvidaste tu contraseña?</a>
+          </div>
+          <div class="separator"><span>o</span></div>
+          <div class="social-login">
+            <button type="button" class="social-btn" id="googleLoginModal">
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt=""> Continuar con Google
+            </button>
+            <button type="button" class="social-btn" id="appleLoginModal">
+              <img src="https://www.svgrepo.com/show/452196/apple-black.svg" alt=""> Continuar con Apple
+            </button>
+          </div>
+          <div class="form-inicio">
+            <button type="submit" class="btn btn-primary">Iniciar sesión</button>
+          </div>
+        </form>
+        <p class="auth-switch">¿No tienes cuenta? <a href="#" onclick="switchToRegister(); return false;">Crear cuenta</a></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Modal -->
+  <div id="registerModal" class="auth-modal" aria-hidden="true">
+    <div class="auth-overlay"></div>
+    <div class="auth-dialog">
+      <div class="auth-header">
+        <h3>Crear cuenta</h3>
+        <button class="auth-close" aria-label="Cerrar">×</button>
+      </div>
+      <div class="auth-content">
+        <form class="auth-form">
+          <div class="form-group">
+            <label for="registerName">Nombre completo</label>
+            <input type="text" id="registerName" required autocomplete="name" minlength="2">
+          </div>
+          <div class="form-group">
+            <label for="registerEmail">Email</label>
+            <input type="email" id="registerEmail" required autocomplete="email">
+          </div>
+          <div class="form-group">
+            <label for="registerPassword">Contraseña</label>
+            <input type="password" id="registerPassword" required autocomplete="new-password" minlength="8">
+            <small class="auth-field-hint">Mínimo 8 caracteres, una mayúscula, una minúscula y un número</small>
+          </div>
+          <div class="form-group">
+            <label for="registerConfirmPassword">Confirmar contraseña</label>
+            <input type="password" id="registerConfirmPassword" required autocomplete="new-password">
+          </div>
+          <div class="form-group">
+            <label for="registerTelefono">Teléfono (opcional)</label>
+            <input type="tel" id="registerTelefono" autocomplete="tel">
+          </div>
+          <div class="separator"><span>o</span></div>
+          <div class="social-login">
+            <button type="button" class="social-btn" id="googleRegisterModal">
+              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt=""> Continuar con Google
+            </button>
+            <button type="button" class="social-btn" id="appleRegisterModal">
+              <img src="https://www.svgrepo.com/show/452196/apple-black.svg" alt=""> Continuar con Apple
+            </button>
+          </div>
+          <div class="form-inicio">
+            <button type="submit" class="btn btn-primary">Crear cuenta</button>
+          </div>
+        </form>
+        <p class="auth-switch">¿Ya tienes cuenta? <a href="#" onclick="switchToLogin(); return false;">Inicia sesión aquí</a></p>
+      </div>
+    </div>
+  </div>
+
   <div id="cartModal" class="cart-modal" aria-hidden="true">
     <div class="cart-overlay"></div>
     <div class="cart-drawer">
@@ -142,10 +232,11 @@
         </div>
       </div>
       <div class="cart-footer">
+        <p class="cart-checkout-hint" id="cartCheckoutHint" hidden>Inicia sesión para completar tu compra.</p>
         <div class="cart-total">
           <span>Total: <strong id="cartTotal">$0</strong></span>
         </div>
-        <button class="btn btn-primary cart-checkout" disabled>Proceder al pago</button>
+        <button type="button" class="btn btn-primary cart-checkout" disabled>Proceder al pago</button>
       </div>
     </div>
   </div>

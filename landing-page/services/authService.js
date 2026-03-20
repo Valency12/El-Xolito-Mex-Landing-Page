@@ -175,6 +175,70 @@ function isAuthenticated() {
   return !!(token && user);
 }
 
+/**
+ * Vacía el carrito del servidor, sube los ítems del carrito local y crea el pedido.
+ * @param {Array<{ id: string|number, quantity: number }>} localItems - ítems del carrito en memoria (id = producto_id)
+ * @returns {Promise<{ success: boolean, data?: object, message?: string }>}
+ */
+async function checkoutFromLocalCart(localItems) {
+  const token = localStorage.getItem('accessToken');
+  if (!token) {
+    return { success: false, message: 'Debes iniciar sesión para pagar' };
+  }
+  const headers = {
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  };
+
+  try {
+    const clearRes = await fetch(`${API_BASE_URL}/cart`, { method: 'DELETE', headers });
+    const clearData = await clearRes.json().catch(() => ({}));
+    if (!clearRes.ok && clearRes.status !== 404) {
+      return { success: false, message: clearData.message || 'No se pudo preparar el carrito' };
+    }
+
+    for (const item of localItems) {
+      const pid = parseInt(item.id, 10);
+      if (Number.isNaN(pid) || pid < 1) {
+        return { success: false, message: 'Hay un producto en el carrito con un identificador no válido' };
+      }
+      const qty = Math.max(1, parseInt(item.quantity, 10) || 1);
+      const res = await fetch(`${API_BASE_URL}/cart/items`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ producto_id: pid, cantidad: qty })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        return {
+          success: false,
+          message: data.message || `No se pudo añadir el producto ${pid} al pedido`
+        };
+      }
+    }
+
+    const orderRes = await fetch(`${API_BASE_URL}/orders`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({})
+    });
+    const orderData = await orderRes.json().catch(() => ({}));
+    if (!orderRes.ok) {
+      return {
+        success: false,
+        message: orderData.message || 'No se pudo crear el pedido'
+      };
+    }
+    return { success: true, data: orderData.data || orderData };
+  } catch (e) {
+    console.error('checkoutFromLocalCart:', e);
+    return {
+      success: false,
+      message: e.message || 'Error de conexión al procesar el pago'
+    };
+  }
+}
+
 // Obtener usuario del localStorage
 function getStoredUser() {
   const userStr = localStorage.getItem('currentUser');
@@ -188,6 +252,30 @@ function getStoredUser() {
   return null;
 }
 
+/**
+ * Lista pedidos del usuario autenticado (GET /api/orders)
+ * @returns {Promise<{ success: boolean, orders: Array, message?: string }>}
+ */
+async function fetchMyOrders() {
+  try {
+    const response = await apiRequest('/orders');
+    if (response.success && response.data) {
+      return {
+        success: true,
+        orders: response.data.orders || []
+      };
+    }
+    return { success: true, orders: [] };
+  } catch (error) {
+    console.error('fetchMyOrders:', error);
+    return {
+      success: false,
+      orders: [],
+      message: error.message || 'No se pudieron cargar las órdenes'
+    };
+  }
+}
+
 // Exportar funciones
 window.authService = {
   register,
@@ -196,6 +284,8 @@ window.authService = {
   getCurrentUser,
   refreshToken,
   isAuthenticated,
-  getStoredUser
+  getStoredUser,
+  checkoutFromLocalCart,
+  fetchMyOrders
 };
 

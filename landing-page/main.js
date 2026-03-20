@@ -14,6 +14,41 @@ const EXAMPLE_PRODUCTS = [
 	{ id: 8, nombre: 'Brazalete Canasta', precio: 580, material: 'Plata .925', categoria_nombre: 'Brazaletes', categoria_slug: 'brazaletes', destacado: 1, imagenes: [{ ruta: 'assets/Brazaletes/brazalete-canasta.jpg', es_principal: true }], image: 'assets/Brazaletes/brazalete-canasta.jpg', descripcion_corta: 'Brazalete tipo canasta.', color: null, stock: 6 }
 ];
 
+/**
+ * Carrusel de la landing: imágenes reales en /assets y copy alineado a la marca.
+ * Los productId enlazan al detalle cuando existen en la API / ejemplo.
+ */
+const FEATURED_SHOWCASE_SLIDES = [
+	{
+		image: 'assets/Pulseras/brazalete_con_turquesa.png',
+		name: 'Brazalete con turquesa',
+		materials: 'Plata .925 · Turquesa natural · Artesanía mexicana',
+		price: 2480,
+		productId: 11
+	},
+	{
+		image: 'assets/Anillos/anillo sello.png',
+		name: 'Anillo sello contemporáneo',
+		materials: 'Plata .925 · Acabado satinado · Diseño minimalista',
+		price: 1890,
+		productId: 8
+	},
+	{
+		image: 'assets/Anillos/anillo_piedra.png',
+		name: 'Anillo con piedra natural',
+		materials: 'Plata .925 · Piedra facetada · Ideal para diario',
+		price: 2150,
+		productId: 8
+	},
+	{
+		image: 'assets/Conjuntos/conjunto_conchas.png',
+		name: 'Conjunto inspiración marina',
+		materials: 'Plata .925 · Motivos de concha · Edición especial',
+		price: 3290,
+		productId: 7
+	}
+];
+
 // Placeholder cuando la imagen del producto no existe (ruta 404)
 const PLACEHOLDER_IMAGE = 'assets/placeholder.svg';
 // Imagen de categoría por slug (archivos que sí existen en assets/Categorias/)
@@ -27,6 +62,16 @@ const CATEGORY_IMAGE_BY_SLUG = {
   dijes: 'assets/Categorias/dije.png',
   conjuntos: 'assets/Categorias/conjunto.png'
 };
+
+/** Tras "Proceder al pago" sin sesión: abrir login y reintentar checkout al autenticarse */
+const PENDING_CHECKOUT_KEY = 'pendingCheckout';
+
+function escapeHtml(text) {
+	if (text == null || text === '') return '';
+	const d = document.createElement('div');
+	d.textContent = String(text);
+	return d.innerHTML;
+}
 
 // Función para esperar a que productService esté disponible
 async function waitForProductService(maxAttempts = 50, delay = 200) {
@@ -216,15 +261,32 @@ class Cart {
 		});
 
 		// Actualizar el contenido del carrito modal si existe (incluso si está cerrado)
+		const checkoutBtns = document.querySelectorAll('.cart-checkout');
+		const authed = typeof window.authService !== 'undefined' && window.authService.isAuthenticated();
+		const hintEl = document.getElementById('cartCheckoutHint');
+		if (hintEl) {
+			if (this.items.length === 0) {
+				hintEl.hidden = true;
+				hintEl.textContent = '';
+			} else if (!authed) {
+				hintEl.hidden = false;
+				hintEl.textContent = 'Inicia sesión para completar tu compra.';
+			} else {
+				hintEl.hidden = true;
+				hintEl.textContent = '';
+			}
+		}
+		checkoutBtns.forEach((btn) => {
+			btn.disabled = this.items.length === 0;
+		});
+
 		if (cartItems && cartTotal && cartEmpty && cartCheckout) {
 			if (this.items.length === 0) {
 				cartItems.style.display = 'none';
 				cartEmpty.style.display = 'block';
-				cartCheckout.disabled = true;
 			} else {
 				cartItems.style.display = 'block';
 				cartEmpty.style.display = 'none';
-				cartCheckout.disabled = false;
 				
 				// Renderizar los items del carrito
 				cartItems.innerHTML = this.items.map(item => {
@@ -491,7 +553,7 @@ function renderProductsSimple(products) {
       if (e.target.classList.contains('btn-add-cart-simple') || e.target.closest('.btn-add-cart-simple')) {
         return;
       }
-      window.location.href = `producto.html?id=${product.id}`;
+      window.location.href = `producto?id=${product.id}`;
     });
 
     const addBtn = card.querySelector('.btn-add-cart-simple');
@@ -538,43 +600,32 @@ if (productCloseBtn) {
 }
 
 function renderFeaturedCarousel() {
-  // Mantener el formato del carrusel de landing (.piezas-des-slide)
-  // para no romper estilos/animación de la sección "Piezas Destacadas".
-  if (PRODUCTS.length === 0) {
-    console.warn('No hay productos cargados para mostrar en el carrusel');
-    return;
-  }
-
   const container = document.getElementById('featuredCarousel');
   if (!container) return;
-
-  const featured = PRODUCTS.filter(p => p.featured);
-  if (!featured.length) {
-    console.warn('No hay productos destacados; se conserva el carrusel estático');
-    return;
-  }
 
   container.innerHTML = '';
   const frag = document.createDocumentFragment();
 
-  for (const p of featured) {
-    const name = p.name || p.nombre || 'Producto destacado';
-    const price = (p.price != null ? p.price : p.precio) || 0;
-    const materials = p.material || 'Plata .925';
-    const imageUrl = getProductImageUrl(p);
-    const fallbackUrl = getProductFallbackImage(p);
+  for (const s of FEATURED_SHOWCASE_SLIDES) {
+    const name = s.name || 'Pieza destacada';
+    const materials = s.materials || 'Plata .925';
+    const price = typeof s.price === 'number' ? s.price : 0;
+    const href = s.href || `producto?id=${encodeURIComponent(s.productId)}`;
+    const imageUrl = encodeURI(s.image);
+    const safeName = escapeHtml(name);
+    const safeMaterials = escapeHtml(materials);
 
     const slide = document.createElement('div');
     slide.className = 'piezas-des-slide';
     slide.innerHTML = `
       <div class="piezas-des-image-container">
-        <img src="${imageUrl}" alt="${name}" data-fallback="${fallbackUrl}">
+        <img src="${imageUrl}" alt="${safeName}" loading="lazy" data-fallback="${PLACEHOLDER_IMAGE}">
       </div>
       <div class="piezas-des-info">
-        <h3 class="piezas-des-name">${name}</h3>
-        <p class="piezas-des-materials">${materials}</p>
+        <h3 class="piezas-des-name">${safeName}</h3>
+        <p class="piezas-des-materials">${safeMaterials}</p>
         <p class="piezas-des-price">${formatCurrency(price)}</p>
-        <button class="btn piezas-des-button" onclick="window.location.href='producto.html?id=${p.id}'">Ver en la tienda</button>
+        <button type="button" class="btn piezas-des-button" data-href="${escapeHtml(href)}">Ver en la tienda</button>
       </div>
     `;
 
@@ -583,6 +634,12 @@ function renderFeaturedCarousel() {
       img.addEventListener('error', function onImgError() {
         img.removeEventListener('error', onImgError);
         img.src = img.dataset.fallback || PLACEHOLDER_IMAGE;
+      });
+    }
+    const btn = slide.querySelector('.piezas-des-button');
+    if (btn && btn.dataset.href) {
+      btn.addEventListener('click', () => {
+        window.location.href = btn.dataset.href;
       });
     }
 
@@ -1092,41 +1149,114 @@ function setupCart() {
 			closeCart();
 		}
 	});
+
+	setupCheckoutListeners();
+}
+
+/**
+ * Checkout: requiere sesión. Sincroniza carrito local con API y crea pedido.
+ */
+function setupCheckoutListeners() {
+	document.querySelectorAll('.cart-checkout').forEach((btn) => {
+		btn.addEventListener('click', onCartCheckoutClick);
+	});
+}
+
+async function onCartCheckoutClick(e) {
+	e.preventDefault();
+	if (!cart.items.length) return;
+	if (!window.authService?.isAuthenticated?.()) {
+		sessionStorage.setItem(PENDING_CHECKOUT_KEY, '1');
+		openLoginModal({
+			checkoutMessage: 'Para pagar, inicia sesión o crea una cuenta. Tu carrito se mantiene en este dispositivo.'
+		});
+		showCartToast('Inicia sesión para continuar al pago');
+		return;
+	}
+	await runCheckoutFlow();
+}
+
+async function runCheckoutFlow() {
+	if (!cart.items.length) return;
+	const buttons = document.querySelectorAll('.cart-checkout');
+	const restoreButtons = () => {
+		buttons.forEach((b) => {
+			b.disabled = cart.items.length === 0;
+			b.textContent = 'Proceder al pago';
+		});
+	};
+	buttons.forEach((b) => {
+		b.disabled = true;
+		b.textContent = 'Procesando...';
+	});
+	try {
+		const result = await window.authService.checkoutFromLocalCart(cart.items);
+		if (!result.success) {
+			showAuthMessage(result.message || 'No se pudo completar el pedido', 'error');
+			cart.updateCartUI();
+			restoreButtons();
+			return;
+		}
+		const pedidoId = result.data?.pedido_id;
+		cart.items = [];
+		cart.saveToStorage();
+		cart.updateCartUI();
+		const cartModal = document.getElementById('cartModal');
+		if (cartModal) {
+			cartModal.setAttribute('aria-hidden', 'true');
+			document.body.style.overflow = '';
+		}
+		showAuthMessage(
+			pedidoId
+				? `Pedido #${pedidoId} creado. Estado: pendiente de pago.`
+				: 'Tu pedido se registró correctamente.',
+			'success'
+		);
+	} catch (err) {
+		console.error('runCheckoutFlow:', err);
+		showAuthMessage(err.message || 'Error al procesar el pedido', 'error');
+	} finally {
+		restoreButtons();
+	}
 }
 
 // Auth Modal Functions
-window.openLoginModal = function () {
-	console.log('openLoginModal called');
+/**
+ * @param {{ checkoutMessage?: string }} [options]
+ */
+window.openLoginModal = function (options = {}) {
 	const modal = document.getElementById('loginModal');
 	const registerModal = document.getElementById('registerModal');
-	console.log('Login modal found:', !!modal);
+	const hint = document.getElementById('loginContextHint');
+	if (hint) {
+		if (options.checkoutMessage) {
+			hint.textContent = options.checkoutMessage;
+			hint.hidden = false;
+		} else {
+			hint.textContent = '';
+			hint.hidden = true;
+		}
+	}
 	if (modal) {
 		modal.setAttribute('aria-hidden', 'false');
-		console.log('Login modal aria-hidden set to false');
-		if (registerModal) {
-			registerModal.setAttribute('aria-hidden', 'true');
-		}
+		if (registerModal) registerModal.setAttribute('aria-hidden', 'true');
 		document.body.style.overflow = 'hidden';
-	} else {
-		console.error('Login modal not found!');
 	}
 };
 
 // Abrir modal de registro
 window.openRegisterModal = function () {
-	console.log('openRegisterModal called');
 	const loginModal = document.getElementById('loginModal');
 	const registerModal = document.getElementById('registerModal');
-	console.log('Register modal found:', !!registerModal);
+	const hint = document.getElementById('loginContextHint');
+	if (hint) {
+		hint.textContent = '';
+		hint.hidden = true;
+	}
 	if (registerModal) {
 		registerModal.setAttribute('aria-hidden', 'false');
-		console.log('Register modal aria-hidden set to false');
-		if (loginModal) {
-			loginModal.setAttribute('aria-hidden', 'true');
-		}
+		if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
 		document.body.style.overflow = 'hidden';
-	} else {
-		console.error('Register modal not found!');
 	}
 };
 
@@ -1136,22 +1266,29 @@ function closeAuthModal() {
 	if (loginModal) loginModal.setAttribute('aria-hidden', 'true');
 	if (registerModal) registerModal.setAttribute('aria-hidden', 'true');
 	document.body.style.overflow = '';
+	const hint = document.getElementById('loginContextHint');
+	if (hint) {
+		hint.textContent = '';
+		hint.hidden = true;
+	}
+	if (!window.authService?.isAuthenticated?.()) {
+		sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+	}
 }
 
 // Cambiar entre login y registro desde los enlaces
 window.switchToRegister = function() {
-	const loginModal = document.getElementById('loginModal');
-	const registerModal = document.getElementById('registerModal');
-	if (loginModal && registerModal) {
-		loginModal.setAttribute('aria-hidden', 'true');
-		registerModal.setAttribute('aria-hidden', 'false');
-		document.body.style.overflow = 'hidden';
-	}
+	openRegisterModal();
 };
 
 window.switchToLogin = function() {
 	const loginModal = document.getElementById('loginModal');
 	const registerModal = document.getElementById('registerModal');
+	const hint = document.getElementById('loginContextHint');
+	if (hint) {
+		hint.textContent = '';
+		hint.hidden = true;
+	}
 	if (loginModal && registerModal) {
 		registerModal.setAttribute('aria-hidden', 'true');
 		loginModal.setAttribute('aria-hidden', 'false');
@@ -1163,52 +1300,47 @@ window.switchToLogin = function() {
 
 // Authentication functionality
 
+/** Iconos SVG para mostrar/ocultar contraseña (sin emojis) */
+const PASSWORD_TOGGLE_SHOW_SVG = `<svg class="password-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>`;
+const PASSWORD_TOGGLE_HIDE_SVG = `<svg class="password-toggle-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>`;
+
 // Función para crear botón de mostrar/ocultar contraseña
 function createPasswordToggle(inputId) {
 	const input = document.getElementById(inputId);
-	if (!input || input.type !== 'password') return;
+	if (!input) return;
+	if (input.type !== 'password' && input.type !== 'text') return;
 
-	// Verificar si ya existe un toggle
-	if (input.parentElement.querySelector('.password-toggle')) return;
+	if (input.closest('.password-input-wrap')?.querySelector('.password-toggle')) return;
+
+	let wrap = input.closest('.password-input-wrap');
+	if (!wrap) {
+		wrap = document.createElement('div');
+		wrap.className = 'password-input-wrap';
+		input.parentNode.insertBefore(wrap, input);
+		wrap.appendChild(input);
+	}
+
+	if (wrap.querySelector('.password-toggle')) return;
 
 	const toggle = document.createElement('button');
 	toggle.type = 'button';
 	toggle.className = 'password-toggle';
 	toggle.setAttribute('aria-label', 'Mostrar contraseña');
-	toggle.innerHTML = '👁️';
-	toggle.style.cssText = `
-		position: absolute;
-		right: 10px;
-		top: 50%;
-		transform: translateY(-50%);
-		background: none;
-		border: none;
-		cursor: pointer;
-		font-size: 18px;
-		padding: 5px;
-		color: #666;
-		z-index: 10;
-	`;
-
-	// Hacer el contenedor relativo si no lo es
-	const formGroup = input.closest('.form-group');
-	if (formGroup) {
-		formGroup.style.position = 'relative';
-	}
+	toggle.innerHTML = PASSWORD_TOGGLE_SHOW_SVG;
 
 	toggle.addEventListener('click', () => {
 		if (input.type === 'password') {
 			input.type = 'text';
-			toggle.innerHTML = '🙈';
+			toggle.innerHTML = PASSWORD_TOGGLE_HIDE_SVG;
 			toggle.setAttribute('aria-label', 'Ocultar contraseña');
 		} else {
 			input.type = 'password';
-			toggle.innerHTML = '👁️';
+			toggle.innerHTML = PASSWORD_TOGGLE_SHOW_SVG;
 			toggle.setAttribute('aria-label', 'Mostrar contraseña');
 		}
 	});
 
-	input.parentElement.appendChild(toggle);
+	wrap.appendChild(toggle);
 }
 
 function showAuthMessage(message, type = 'success') {
@@ -1282,6 +1414,9 @@ async function handleLogin(event) {
 			// Update UI
 			updateAuthUI(true, result.user);
 
+			const resumeCheckout = sessionStorage.getItem(PENDING_CHECKOUT_KEY) === '1';
+			if (resumeCheckout) sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+
 			// Close modal
 			closeAuthModal();
 
@@ -1291,6 +1426,10 @@ async function handleLogin(event) {
 			// Show success message
 			const displayName = result.user.nombre_completo || result.user.name || result.user.email.split('@')[0];
 			showAuthMessage(`¡Bienvenido de vuelta, ${displayName}!`);
+
+			if (resumeCheckout) {
+				await runCheckoutFlow();
+			}
 		} else {
 			// Mostrar error específico del backend
 			const errorMessage = result.message || 'Error al iniciar sesión';
@@ -1360,6 +1499,9 @@ async function handleRegister(event) {
 			// Update UI
 			updateAuthUI(true, result.user);
 
+			const resumeCheckout = sessionStorage.getItem(PENDING_CHECKOUT_KEY) === '1';
+			if (resumeCheckout) sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+
 			// Close modal
 			closeAuthModal();
 
@@ -1369,11 +1511,14 @@ async function handleRegister(event) {
 			// Show success message
 			const displayName = result.user.nombre_completo || result.user.name || result.user.email.split('@')[0];
 			showAuthMessage(`¡Cuenta creada exitosamente! Bienvenido, ${displayName}!`);
-			
-			// Redirigir a página de perfil después de 1.5 segundos
-			setTimeout(() => {
-				window.location.href = 'mi-cuenta.html';
-			}, 1500);
+
+			if (resumeCheckout) {
+				await runCheckoutFlow();
+			} else {
+				setTimeout(() => {
+					window.location.href = 'mi-cuenta';
+				}, 1500);
+			}
 		} else {
 			showAuthMessage(result.message || 'Error al registrar usuario', 'error');
 		}
@@ -1411,38 +1556,79 @@ function showForgotPassword() {
 	// TODO: Implementar modal y endpoints de recuperación de contraseña cuando el backend esté listo
 }
 
+/** Primer nombre o parte local del correo para saludos */
+function getUserFirstName(user) {
+	if (!user) return '';
+	const raw = (user.nombre_completo || '').trim();
+	if (raw) {
+		const first = raw.split(/\s+/)[0];
+		return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
+	}
+	const local = (user.email || '').split('@')[0];
+	return local ? local.charAt(0).toUpperCase() + local.slice(1) : '';
+}
+
+/** Con sesión: texto «Hola, nombre»; sin sesión: icono de persona */
+function renderProfileButtonState(userData) {
+	const profileToggle = document.getElementById('profileToggle');
+	if (!profileToggle) return;
+
+	const greetingEl = profileToggle.querySelector('.profile-greeting');
+	const svg = profileToggle.querySelector('.profile-icon-svg');
+
+	if (userData) {
+		profileToggle.classList.add('profile-toggle--logged');
+		const first = getUserFirstName(userData);
+		const label = (userData.nombre_completo || '').trim() || userData.email || 'Mi cuenta';
+		profileToggle.setAttribute('aria-label', `Mi cuenta: ${label}`);
+		if (greetingEl) {
+			greetingEl.textContent = first ? `Hola, ${first}` : 'Hola';
+			greetingEl.hidden = false;
+		}
+		if (svg) svg.setAttribute('hidden', 'hidden');
+		profileToggle.onclick = () => {
+			window.location.href = 'mi-cuenta';
+		};
+	} else {
+		profileToggle.classList.remove('profile-toggle--logged');
+		profileToggle.setAttribute('aria-label', 'Mi cuenta');
+		if (greetingEl) {
+			greetingEl.textContent = '';
+			greetingEl.hidden = true;
+		}
+		if (svg) svg.removeAttribute('hidden');
+		profileToggle.onclick = () => {
+			openLoginModal({});
+		};
+	}
+}
+
 function updateAuthUI(isLoggedIn, userData = null) {
 	const authButtons = document.querySelector('.auth-buttons') || document.getElementById('authButtonsContainer');
-	const profileToggle = document.getElementById('profileToggle');
-	
-	// Siempre ocultar los botones de auth (se muestran en el modal cuando se hace clic en el icono de perfil)
+
 	if (authButtons) {
 		authButtons.style.display = 'none';
 	}
-	
+
 	if (isLoggedIn && userData) {
-		// Usuario autenticado: icono de perfil va a mi-cuenta
-		if (profileToggle) {
-			profileToggle.onclick = () => {
-				window.location.href = 'mi-cuenta.html';
-			};
-		}
+		renderProfileButtonState(userData);
 	} else {
-		// Usuario no autenticado: icono de perfil abre modal de login
-		if (profileToggle) {
-			profileToggle.onclick = () => {
-				openLoginModal();
-			};
-		}
+		renderProfileButtonState(null);
+	}
+	if (typeof cart !== 'undefined' && cart && typeof cart.updateCartUI === 'function') {
+		cart.updateCartUI();
 	}
 }
 
+// Exportar para mi-cuenta y plantillas
+window.getUserFirstName = getUserFirstName;
+
 function showUserProfile() {
-	window.location.href = 'mi-cuenta.html';
+	window.location.href = 'mi-cuenta';
 }
 
 function showUserOrders() {
-	window.location.href = 'mi-cuenta.html';
+	window.location.href = 'mi-cuenta';
 }
 
 function setupAuthButtons() {
@@ -1642,6 +1828,107 @@ function setupHashNavigation() {
 	});
 }
 
+function formatOrderEstadoLabel(estado) {
+	const map = {
+		pendiente_pago: 'Pendiente de pago',
+		pagado: 'Pagado',
+		enviado: 'Enviado',
+		entregado: 'Entregado',
+		cancelado: 'Cancelado'
+	};
+	return map[estado] || estado || '—';
+}
+
+function formatCurrencyMX(n) {
+	const x = typeof n === 'number' ? n : parseFloat(n, 10);
+	if (Number.isNaN(x)) return '—';
+	return new Intl.NumberFormat('es-MX', { style: 'currency', currency: 'MXN' }).format(x);
+}
+
+async function initMiCuentaPage() {
+	const greeting = document.getElementById('accountGreeting');
+	const ordersList = document.getElementById('ordersList');
+	const ordersEmpty = document.getElementById('ordersEmpty');
+	const ordersLoading = document.getElementById('ordersLoading');
+	const emailLine = document.getElementById('accountEmailLine');
+	const logoutBtn = document.getElementById('accountLogout');
+
+	if (!window.authService?.isAuthenticated?.()) {
+		window.location.replace('tienda');
+		return;
+	}
+
+	let user = window.authService.getStoredUser();
+	try {
+		const fresh = await window.authService.getCurrentUser();
+		if (fresh) user = fresh;
+	} catch (_) {
+		/* mantener datos locales */
+	}
+	if (!window.authService.isAuthenticated()) {
+		window.location.replace('tienda');
+		return;
+	}
+	const first = window.getUserFirstName ? window.getUserFirstName(user) : '';
+	if (greeting) {
+		greeting.innerHTML = first
+			? `¡Hola! Es bueno verte, <span class="account-name-highlight">${escapeHtml(first)}</span>!`
+			: '¡Hola! Es bueno verte!';
+	}
+	if (emailLine && user?.email) {
+		emailLine.textContent = user.email;
+		emailLine.hidden = false;
+	}
+
+	if (logoutBtn) {
+		logoutBtn.addEventListener('click', async (e) => {
+			e.preventDefault();
+			await window.authService.logout();
+			window.location.href = 'tienda';
+		});
+	}
+
+	if (ordersLoading) ordersLoading.hidden = false;
+	const result = await window.authService.fetchMyOrders();
+	if (ordersLoading) ordersLoading.hidden = true;
+
+	if (!ordersList || !ordersEmpty) return;
+
+	if (result.success && result.orders && result.orders.length > 0) {
+		ordersEmpty.hidden = true;
+		ordersList.hidden = false;
+		ordersList.innerHTML = result.orders
+			.map((o) => {
+				const id = o.id != null ? o.id : '—';
+				const total = formatCurrencyMX(o.total);
+				const fecha = o.created_at
+					? new Date(o.created_at).toLocaleDateString('es-MX', { dateStyle: 'medium', timeStyle: 'short' })
+					: '—';
+				const estado = formatOrderEstadoLabel(o.estado);
+				return `
+				<article class="account-order-card">
+					<div class="account-order-row">
+						<span class="account-order-label">Pedido #${escapeHtml(String(id))}</span>
+						<span class="account-order-estado">${escapeHtml(estado)}</span>
+					</div>
+					<div class="account-order-meta">
+						<span>${fecha}</span>
+						<strong class="account-order-total">${total}</strong>
+					</div>
+				</article>`;
+			})
+			.join('');
+	} else {
+		ordersList.hidden = true;
+		ordersEmpty.hidden = false;
+		if (!result.success && result.message) {
+			ordersEmpty.textContent = result.message;
+		} else {
+			ordersEmpty.textContent = 'No has hecho ninguna orden todavía.';
+		}
+	}
+}
+
 async function main() {
 	console.log('main() function called');
 	setupNav();
@@ -1649,6 +1936,11 @@ async function main() {
 	setupAuthModals();
 	setupYear();
 	setupHashNavigation();
+
+	if (document.getElementById('miCuentaPage')) {
+		await initMiCuentaPage();
+		return;
+	}
 	
 	// En la tienda no esperamos a productService: los productos se cargan con loadProductsSimple() (fetch directo).
 	// Solo en home (y otras páginas con carrusel) pre-cargamos vía loadProductsFromAPI para no bloquear la tienda.
@@ -1661,9 +1953,6 @@ async function main() {
 			PRODUCTS = EXAMPLE_PRODUCTS.map(p => window.productService && window.productService.formatProductForFrontend ? window.productService.formatProductForFrontend(p) : { id: p.id, name: p.nombre, price: p.precio, material: p.material, image: p.image, category: p.categoria_slug, imagenes: p.imagenes, color: p.color });
 		} else {
 			console.log(`✅ ${PRODUCTS.length} productos cargados exitosamente`);
-		}
-		if (PRODUCTS.length > 0) {
-			renderFeaturedCarousel();
 		}
 	}
 	console.log('main() function completed');
@@ -1779,14 +2068,13 @@ async function main() {
 		}
 	}
 
-	// Check if we're on the home page - inicializar carrusel de piezas destacadas
+	// Piezas destacadas: imágenes y textos desde FEATURED_SHOWCASE_SLIDES; luego animación
+	if (document.getElementById('featuredCarousel')) {
+		renderFeaturedCarousel();
+	}
 	const carouselElement = document.querySelector('.piezas-des-carousel');
-	console.log('🔍 Buscando carrusel en la página:', !!carouselElement);
 	if (carouselElement) {
-		console.log('✅ Carrusel encontrado, llamando setupPiezasDestacadasCarousel()');
 		setupPiezasDestacadasCarousel();
-	} else {
-		console.warn('⚠️ Carrusel no encontrado en la página');
 	}
   
   // Setup product modal events
@@ -1912,35 +2200,21 @@ window.closeBlogModal = function (id) {
 
 // Función para inicializar el carrusel de piezas destacadas
 window.setupPiezasDestacadasCarousel = function setupPiezasDestacadasCarousel() {
-	console.log('🔧 setupPiezasDestacadasCarousel() llamado');
 	const carousel = document.querySelector('.piezas-des-carousel');
-	console.log('Carrusel encontrado:', !!carousel);
-	if (!carousel) {
-		console.error('❌ Carrusel no encontrado!');
-		return; // Si no existe el carrusel, salir
-	}
+	if (!carousel) return;
+	if (carousel.dataset.carouselInit === '1') return;
 	
 	const slidesContainer = document.querySelector('#featuredCarousel');
 	const slides = document.querySelectorAll('.piezas-des-slide');
 	const dotsContainer = document.querySelector('.piezas-des-dots');
 	
-	console.log('Elementos encontrados:', {
-		slidesContainer: !!slidesContainer,
-		slides: slides.length,
-		dotsContainer: !!dotsContainer
-	});
-	
 	if (!slidesContainer || !slides.length || !dotsContainer) {
-		console.error('❌ Elementos del carrusel no encontrados:', {
-			slidesContainer: !!slidesContainer,
-			slides: slides.length,
-			dotsContainer: !!dotsContainer
-		});
 		return;
 	}
-	
+
 	const totalSlides = slides.length;
-	console.log('✅ Todos los elementos encontrados, inicializando carrusel con', totalSlides, 'slides...');
+	carousel.dataset.carouselInit = '1';
+	carousel.setAttribute('tabindex', '0');
 	
 	let currentSlide = 0;
 	let autoSlideInterval;
@@ -2031,7 +2305,6 @@ window.setupPiezasDestacadasCarousel = function setupPiezasDestacadasCarousel() 
 	// Iniciar autoavance al cargar la página
 	startAutoSlide();
 	
-	console.log('✅ Carrusel inicializado correctamente con', totalSlides, 'slides');
 }
 
 // Cambiar entre login y registro desde los enlaces (ya definido arriba)
@@ -2256,7 +2529,7 @@ window.addToCartAndCheckout = function(productId) {
 // Mensaje de confirmación al añadir al carrito
 
 function showAddToCartMessage(productId, quantity) {
-  const product = PRODUCTS.find(p => p.id === productId);
+  const product = PRODUCTS.find(p => p.id == productId || String(p.id) === String(productId));
   if (!product) return;
 
   let messageContainer = document.getElementById('addToCartMessage');
@@ -2344,8 +2617,8 @@ async function renderProductPage() {
     </div>
   `;
   
-  // Intentar obtener el producto desde cache o API
-  let product = PRODUCTS.find(p => p.id === productId);
+  // Intentar obtener el producto desde cache o API (id en URL suele ser string)
+  let product = PRODUCTS.find(p => p.id == productId || String(p.id) === String(productId));
   
   if (!product) {
     product = await getProductById(productId);
@@ -2372,90 +2645,92 @@ async function renderProductPage() {
     productImages = product.imagenes.map(img => img.ruta);
   } else {
     // Fallback: usar la imagen principal
-    productImages = [product.image || 'assets/placeholder.jpg'];
+    productImages = [product.image || PLACEHOLDER_IMAGE];
   }
+
+  const categoryLabel = (product.category || product.categoria_nombre || 'joyería');
+  const normalizedCategory = String(categoryLabel).toLowerCase().trim();
+  const categoryDisplay = normalizedCategory.charAt(0).toUpperCase() + normalizedCategory.slice(1);
+  const shortDesc = product.descripcion_corta || `Pieza elaborada en ${product.material || 'plata .925'}.`;
+  const longDesc = (product.descripcion_larga || product.descripcion_corta) || `Pieza de joyería mexicana minimalista hecha a mano con ${(product.material || '').toLowerCase()}. Cada pieza es única y refleja la esencia de la artesanía mexicana.`;
+  const stock = Number.isFinite(Number(product.stock)) ? Number(product.stock) : null;
+  const stockText = stock == null ? 'Disponibilidad por confirmar' : (stock > 0 ? `${stock} pieza${stock === 1 ? '' : 's'} disponibles` : 'Sin stock');
 
   // Renderizar el producto completo
   productContent.innerHTML = `
-    <div class="product-page-container">
-      <div class="product-page-gallery">
-        <div class="product-page-image-main">
-          <img id="mainProductImage" src="${productImages[0]}" alt="${product.name}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSIyMDAiIHk9IjIwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4Ij5JbWFnZW4gbm8gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4='">
-        </div>
-        <div class="product-page-thumbnails">
-          ${productImages.map((img, index) => `
-            <div class="product-thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img}', ${index})">
-              <img src="${img}" alt="${product.name} - Vista ${index + 1}" onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgdmlld0JveD0iMCAwIDQwMCA0MDAiIGZpbGw9Im5vbmUiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3Qgd2lkdGg9IjQwMCIgaGVpZ2h0PSI0MDAiIGZpbGw9IiNmNWY1ZjUiLz48dGV4dCB4PSIyMDAiIHk9IjIwMCIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZG9taW5hbnQtYmFzZWxpbmU9Im1pZGRsZSIgZmlsbD0iIzk5OSIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjE4Ij5JbWFnZW4gbm8gZGlzcG9uaWJsZTwvdGV4dD48L3N2Zz4='">
-            </div>
-          `).join('')}
-        </div>
-      </div>
-      <div class="product-page-info">
-        <h1 class="product-page-title">${product.name}</h1>
-        <div class="product-page-price">${formatCurrency(product.price)}</div>
-        
-        <div class="product-page-meta">
-          <div class="meta-item">
-            <strong>Material:</strong>
-            <span>${product.material}</span>
+    <section class="product-page">
+      <div class="container product-page-container">
+        <div class="product-page-gallery">
+          <div class="product-page-image-main">
+            <img id="mainProductImage" src="${productImages[0]}" alt="${product.name}" data-fallback="${getProductFallbackImage(product)}" onerror="this.src=this.dataset.fallback || '${PLACEHOLDER_IMAGE}'">
           </div>
-          <div class="meta-item">
-            <strong>Color:</strong>
-            <span>${product.color || '—'}</span>
-          </div>
-          <div class="meta-item">
-            <strong>Categoría:</strong>
-            <span>${(product.category || product.categoria_nombre || '').charAt(0).toUpperCase() + (product.category || product.categoria_nombre || '').slice(1)}</span>
-          </div>
-          <div class="meta-item">
-            <strong>SKU:</strong>
-            <span>${product.id}</span>
+          <div class="product-page-thumbnails">
+            ${productImages.map((img, index) => `
+              <button type="button" class="product-thumbnail ${index === 0 ? 'active' : ''}" onclick="changeMainImage('${img}', ${index})" aria-label="Vista ${index + 1} de ${product.name}">
+                <img src="${img}" alt="${product.name} - Vista ${index + 1}" data-fallback="${getProductFallbackImage(product)}" onerror="this.src=this.dataset.fallback || '${PLACEHOLDER_IMAGE}'">
+              </button>
+            `).join('')}
           </div>
         </div>
 
-        <div class="product-page-options">
-          <div class="quantity-selector">
-            <label for="productPageQuantity">Cantidad:</label>
-            <div class="qty-controls">
-              <button type="button" onclick="decreaseProductPageQuantity()">-</button>
-              <input type="number" id="productPageQuantity" value="1" min="1" max="10">
-              <button type="button" onclick="increaseProductPageQuantity()">+</button>
+        <div class="product-page-info">
+          <a class="product-back-link" href="tienda?categoria=${normalizedCategory}">← Volver a ${categoryDisplay}</a>
+          <h1 class="product-page-title">${product.name}</h1>
+          <p class="product-page-short">${shortDesc}</p>
+
+          <div class="product-page-price-row">
+            <div class="product-page-price">${formatCurrency(product.price)}</div>
+            <span class="product-page-stock ${stock === 0 ? 'is-out' : ''}">${stockText}</span>
+          </div>
+
+          <div class="product-page-meta">
+            <div class="meta-item">
+              <strong>Material</strong>
+              <span>${product.material || 'Plata .925'}</span>
+            </div>
+            <div class="meta-item">
+              <strong>Color</strong>
+              <span>${product.color || '—'}</span>
+            </div>
+            <div class="meta-item">
+              <strong>Categoría</strong>
+              <span>${categoryDisplay}</span>
+            </div>
+            <div class="meta-item">
+              <strong>SKU</strong>
+              <span>${product.id}</span>
             </div>
           </div>
-        </div>
 
-        <div class="product-page-features">
-          <div class="feature">
-            <span class="feature-icon">🚚</span>
-            <span>Envío gratis en compras mayores a $879</span>
+          <div class="product-page-options">
+            <div class="quantity-selector">
+              <label for="productPageQuantity">Cantidad</label>
+              <div class="qty-controls">
+                <button type="button" onclick="decreaseProductPageQuantity()" aria-label="Disminuir cantidad">-</button>
+                <input type="number" id="productPageQuantity" value="1" min="1" max="10">
+                <button type="button" onclick="increaseProductPageQuantity()" aria-label="Aumentar cantidad">+</button>
+              </div>
+            </div>
           </div>
-          <div class="feature">
-            <span class="feature-icon">🔒</span>
-            <span>Pago seguro</span>
-          </div>
-          <div class="feature">
-            <span class="feature-icon">↩️</span>
-            <span>Devoluciones en 30 días</span>
-          </div>
-        </div>
 
-        <div class="product-page-actions">
-          <button class="btn btn-primary btn-full" onclick="addToCartFromProductPage('${product.id}')">
-            Añadir al carrito
-          </button>
-          <button class="btn btn-outline btn-full" onclick="addToCartAndCheckoutFromPage('${product.id}')">
-            Comprar ahora
-          </button>
-        </div>
+          <div class="product-page-actions">
+            <button class="btn btn-primary btn-full" onclick="addToCartFromProductPage('${product.id}')">Añadir al carrito</button>
+            <button class="btn btn-outline btn-full" onclick="addToCartAndCheckoutFromPage('${product.id}')">Comprar ahora</button>
+          </div>
 
-        <div class="product-page-description" style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid #e0e0e0;">
-          <h3 style="font-family: \"GFS Didot\", serif; margin-bottom: 1rem;">Descripción</h3>
-          <p style="color: var(--gris); line-height: 1.8;">
-            ${(product.descripcion_larga || product.descripcion_corta) || `Pieza de joyería mexicana minimalista hecha a mano con ${(product.material || '').toLowerCase()}. Cada pieza es única y refleja la esencia de la artesanía mexicana.`}
-          </p>
+          <div class="product-page-features">
+            <div class="feature"><span class="feature-icon">🚚</span><span>Envío gratis en compras mayores a $879</span></div>
+            <div class="feature"><span class="feature-icon">🔒</span><span>Pago seguro</span></div>
+            <div class="feature"><span class="feature-icon">↩️</span><span>Devoluciones en 30 días</span></div>
+          </div>
+
+          <div class="product-page-description">
+            <h3>Descripción</h3>
+            <p>${longDesc}</p>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   `;
 }
 
@@ -2481,14 +2756,15 @@ window.decreaseProductPageQuantity = function() {
   }
 };
 
-function addToCartFromProductPage(productId) {
+/** Debe estar en window: main.js es ES module y los onclick del HTML solo ven globales */
+window.addToCartFromProductPage = function addToCartFromProductPage(productId) {
   const quantityInput = document.getElementById('productPageQuantity');
   if (!quantityInput) return;
   
-  const quantity = parseInt(quantityInput.value) || 1;
+  const quantity = parseInt(quantityInput.value, 10) || 1;
   cart.addItem(productId, quantity);
   showAddToCartMessage(productId, quantity);
-}
+};
 
 // Función para agregar desde el carrusel de piezas destacadas
 window.addToCartFromFeatured = function(productId) {
@@ -2496,14 +2772,13 @@ window.addToCartFromFeatured = function(productId) {
   showAddToCartMessage(productId, 1);
 };
 
-function addToCartAndCheckoutFromPage(productId) {
+window.addToCartAndCheckoutFromPage = function addToCartAndCheckoutFromPage(productId) {
   const quantityInput = document.getElementById('productPageQuantity');
   if (!quantityInput) return;
   
-  const quantity = parseInt(quantityInput.value) || 1;
+  const quantity = parseInt(quantityInput.value, 10) || 1;
   cart.addItem(productId, quantity);
   
-  // Abrir el carrito después de un pequeño delay para que se actualice
   setTimeout(() => {
     const cartModal = document.getElementById('cartModal');
     if (cartModal) {
@@ -2511,7 +2786,7 @@ function addToCartAndCheckoutFromPage(productId) {
       document.body.style.overflow = 'hidden';
     }
   }, 100);
-}
+};
 
 // Función para cambiar la imagen principal al hacer clic en una miniatura
 window.changeMainImage = function(imageSrc, index) {

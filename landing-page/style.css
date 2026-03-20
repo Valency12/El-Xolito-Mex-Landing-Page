@@ -3190,30 +3190,30 @@ img{ display:block; max-width:100%; height:auto; }
 .tienda-product-grid{
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 2rem;
+  gap: 1.5rem;
   padding: 0;
   list-style: none;
   margin: 0;
 }
 .tienda-product-card{
-  background: #fff;
-  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #fcfcfc);
+  border-radius: 14px;
   overflow: hidden;
-  border: 1px solid #eee;
-  box-shadow: 0 2px 12px rgba(0,0,0,.06);
-  transition: transform .3s ease, box-shadow .3s ease, border-color .2s ease;
+  border: 1px solid #e9e9e9;
+  box-shadow: 0 4px 18px rgba(0,0,0,.07);
+  transition: transform .25s ease, box-shadow .25s ease, border-color .2s ease;
   cursor: pointer;
   display: flex;
   flex-direction: column;
 }
 .tienda-product-card:hover{
-  transform: translateY(-6px);
-  box-shadow: 0 12px 28px rgba(0,0,0,.12);
-  border-color: #ddd;
+  transform: translateY(-5px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.12);
+  border-color: #d8d8d8;
 }
 .tienda-product-card__image{
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
   background: #f5f5f5;
 }
@@ -3222,25 +3222,30 @@ img{ display:block; max-width:100%; height:auto; }
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform .35s ease;
+}
+.tienda-product-card:hover .tienda-product-card__image img{
+  transform: scale(1.035);
 }
 .tienda-product-card__body{
-  padding: 1.25rem 1.25rem 1.5rem;
+  padding: 1rem 1rem 1.15rem;
   display: flex;
   flex-direction: column;
   flex: 1;
 }
 .tienda-product-card__title{
   font-family: "GFS Didot", serif;
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   font-weight: 400;
   color: #000;
-  margin: 0 0 0.35rem 0;
+  margin: 0 0 0.2rem 0;
   line-height: 1.3;
 }
 .tienda-product-card__meta{
-  font-size: 0.875rem;
-  color: #6b6b6b;
-  margin: 0 0 1rem 0;
+  font-size: 0.8rem;
+  color: #7a7a7a;
+  margin: 0 0 .8rem 0;
+  letter-spacing: 0.02em;
 }
 .tienda-product-card__footer{
   margin-top: auto;
@@ -3252,24 +3257,25 @@ img{ display:block; max-width:100%; height:auto; }
 }
 .tienda-product-card__price{
   font-family: "GFS Didot", serif;
-  font-size: 1.35rem;
+  font-size: 1.28rem;
   font-weight: 400;
   color: #000;
 }
 .tienda-product-card__btn{
   font-family: "GFS Didot", serif;
-  font-size: 0.9rem;
-  padding: 0.5rem 1rem;
-  border-radius: 8px;
+  font-size: 0.85rem;
+  padding: 0.42rem 0.9rem;
+  border-radius: 999px;
   border: 1px solid #000;
   background: #000;
   color: #fff;
   cursor: pointer;
-  transition: background .2s ease, color .2s ease;
+  transition: background .2s ease, color .2s ease, transform .2s ease;
 }
 .tienda-product-card__btn:hover{
   background: #fff;
   color: #000;
+  transform: translateY(-1px);
 }
 .tienda-empty{
   text-align: center;
@@ -4248,12 +4254,23 @@ body {
 .auth-dialog {
   position: relative;
   background: #fff;
-  width: 90%;
-  max-width: 380px;
-  border-radius: 10px;
-  box-shadow: 0 0 25px rgba(0, 0, 0, 0.2);
+  width: min(92vw, 420px);
+  max-width: 420px;
+  max-height: min(90vh, 880px);
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.18);
   z-index: 1001;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.auth-dialog .auth-content {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  flex: 1;
+  min-height: 0;
 }
 
 /* ----- Encabezado del modal ----- */
@@ -4263,6 +4280,7 @@ body {
   align-items: center;
   padding: 1rem 1.2rem;
   border-bottom: 1px solid #ddd;
+  flex-shrink: 0;
 }
 
 .auth-header h3 {
@@ -4288,6 +4306,97 @@ body {
   padding: 1.2rem;
 }
 
+/* Pantallas medianas y grandes: modal más ancho y tipografía cómoda */
+@media (min-width: 600px) {
+  .auth-dialog {
+    width: min(90vw, 480px);
+    max-width: 480px;
+    border-radius: 14px;
+  }
+  .auth-header {
+    padding: 1.15rem 1.5rem;
+  }
+  .auth-header h3 {
+    font-size: 1.35rem;
+  }
+  .auth-content {
+    padding: 1.5rem 1.75rem;
+  }
+  .auth-form label {
+    font-size: 0.95rem;
+  }
+  .auth-form input {
+    padding: 10px 12px;
+    font-size: 1rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .auth-dialog {
+    width: min(88vw, 540px);
+    max-width: 540px;
+    box-shadow: 0 12px 48px rgba(0, 0, 0, 0.22);
+  }
+  .auth-header {
+    padding: 1.25rem 1.75rem;
+  }
+  .auth-header h3 {
+    font-size: 1.45rem;
+  }
+  .auth-content {
+    padding: 1.65rem 2rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .auth-dialog {
+    width: min(85vw, 580px);
+    max-width: 580px;
+  }
+  .auth-content {
+    padding: 1.75rem 2.25rem;
+  }
+}
+
+/* Registro: dos columnas en pantallas amplias (menos scroll, mejor uso del espacio) */
+@media (min-width: 768px) {
+  #registerModal .auth-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 1.25rem;
+    row-gap: 0;
+    align-items: start;
+  }
+  #registerModal .auth-form > .form-group {
+    margin-bottom: 1rem;
+  }
+  /* Teléfono, separador, redes y botón a ancho completo */
+  #registerModal .auth-form > .form-group:nth-child(5),
+  #registerModal .auth-form > .separator,
+  #registerModal .auth-form > .social-login,
+  #registerModal .auth-form > .form-inicio {
+    grid-column: 1 / -1;
+  }
+  #registerModal .social-login {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  #registerModal .social-login .social-btn {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 200px;
+  }
+
+  /* Login: redes en fila en escritorio */
+  #loginModal .social-login {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  #loginModal .social-login .social-btn {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 200px;
+  }
+}
+
 .auth-form .form-group {
   margin-bottom: 1rem;
 }
@@ -4311,6 +4420,49 @@ body {
   border-color: #000;
 }
 
+/* Campo contraseña: toggle alineado al centro vertical del input (SVG, sin emojis) */
+.password-input-wrap {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+.auth-form .password-input-wrap input {
+  padding-right: 2.75rem;
+  box-sizing: border-box;
+}
+.password-toggle {
+  position: absolute;
+  right: 0.4rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #555;
+  cursor: pointer;
+  z-index: 2;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.password-toggle:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #111;
+}
+.password-toggle:focus-visible {
+  outline: 2px solid #000;
+  outline-offset: 1px;
+}
+.password-toggle-icon {
+  display: block;
+  flex-shrink: 0;
+}
+
 /* ----- Enlace inferior ----- */
 .auth-switch {
   text-align: center;
@@ -4328,18 +4480,43 @@ body {
   text-decoration: none;
 }
 
-/* ----- Responsive ----- */
+/* ----- Responsive (móvil estrecho) ----- */
 @media (max-width: 480px) {
   .auth-dialog {
-    width: 95%;
-    max-width: 320px;
+    width: 94%;
+    max-width: none;
+    max-height: 92vh;
+    border-radius: 10px;
   }
   .auth-header h3 {
-    font-size: 1rem;
+    font-size: 1.05rem;
+  }
+  .auth-content {
+    padding: 1rem 1.1rem;
   }
   .btn {
     width: 100%;
     text-align: center;
+  }
+  /* Registro vuelve a una columna */
+  #registerModal .auth-form {
+    display: block;
+  }
+  #registerModal .social-login {
+    flex-direction: column;
+  }
+  #registerModal .social-login .social-btn {
+    flex: none;
+    min-width: 0;
+    width: 100%;
+  }
+  #loginModal .social-login {
+    flex-direction: column;
+  }
+  #loginModal .social-login .social-btn {
+    flex: none;
+    width: 100%;
+    min-width: 0;
   }
 }
 
@@ -5033,11 +5210,11 @@ body {
 
 .product-page-container {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(320px, 1fr) minmax(320px, 1fr);
   gap: 3rem;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
-  padding: 0;
+  padding: 0 1rem;
   align-items: start;
 }
 
@@ -5054,6 +5231,8 @@ body {
 .product-page-image-main {
   border-radius: var(--radius);
   overflow: hidden;
+  background: #f8f8f8;
+  border: 1px solid #eee;
   display: flex;
   align-items: flex-start;
   justify-content: center;
@@ -5066,8 +5245,8 @@ body {
 .product-page-image-main img {
   width: 100%;
   height: 100%;
-  object-fit: contain;
-  object-position: center top;
+  object-fit: cover;
+  object-position: center;
   display: block;
 }
 
@@ -5089,6 +5268,7 @@ body {
   transition: all 0.2s ease;
   background: #f5f5f5;
   flex-shrink: 0;
+  padding: 0;
 }
 
 .product-thumbnail:hover {
@@ -5111,51 +5291,174 @@ body {
 .product-page-info {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.15rem;
+  padding: 0.25rem 0;
+}
+
+.product-back-link{
+  display: inline-flex;
+  width: fit-content;
+  font-family: "GFS Didot", serif;
+  font-size: 0.95rem;
+  color: #222;
+  text-decoration: none;
+  opacity: .8;
+}
+.product-back-link:hover{
+  opacity: 1;
+  text-decoration: underline;
 }
 
 .product-page-title {
   font-family: "GFS Didot", serif;
-  font-size: 2.5rem;
-  font-weight: 700;
+  font-size: clamp(1.9rem, 1.2vw + 1.6rem, 2.4rem);
+  font-weight: 400;
   margin: 0;
   color: var(--negro-dark);
   line-height: 1.2;
 }
 
+.product-page-short{
+  margin: 0;
+  color: #666;
+  line-height: 1.6;
+}
+
+.product-page-price-row{
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
 .product-page-price {
+  font-family: "GFS Didot", serif;
   font-size: 2rem;
-  font-weight: 700;
-  color: var(--verde);
-  margin: 0.5rem 0;
+  font-weight: 400;
+  color: #111;
+  margin: 0;
+}
+
+.product-page-stock{
+  font-size: 0.85rem;
+  color: #2e694f;
+  background: #ecf7f1;
+  border: 1px solid #d3eadf;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+}
+.product-page-stock.is-out{
+  color: #8a2d2d;
+  background: #fdecec;
+  border-color: #f3cece;
 }
 
 .product-page-meta {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 1rem;
-  padding: 1.5rem 0;
+  gap: 0.75rem;
+  padding: 1.2rem 0;
   border-top: 1px solid #e0e0e0;
   border-bottom: 1px solid #e0e0e0;
+}
+.meta-item{
+  background: #fafafa;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+}
+.meta-item strong{
+  display: block;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: #777;
+  margin-bottom: 0.2rem;
+}
+.meta-item span{
+  color: #111;
+}
+
+.product-page-options{
+  margin-top: 0.25rem;
+}
+.quantity-selector label{
+  display: block;
+  margin-bottom: .45rem;
+  font-size: .9rem;
+  color: #555;
+}
+.qty-controls{
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.qty-controls button{
+  width: 36px;
+  height: 36px;
+  border: 0;
+  background: #fff;
+  color: #111;
+  cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, transform .12s ease;
+}
+.product-page .qty-controls button:hover{
+  background: #111;
+  color: #fff;
+}
+.product-page .qty-controls button:active{
+  transform: scale(0.96);
+}
+.product-page .qty-controls button:focus-visible{
+  outline: 2px solid #111;
+  outline-offset: -2px;
+}
+.qty-controls input{
+  width: 48px;
+  height: 36px;
+  border: 0;
+  text-align: center;
+  font-family: "GFS Didot", serif;
 }
 
 .product-page-features {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding: 1.5rem 0;
+  gap: 0.6rem;
+  padding: 0.75rem 0 0.25rem;
+}
+.feature{
+  align-items: center;
+  gap: .65rem;
+  color: #333;
+  font-size: 0.95rem;
+  line-height: 1.35;
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+}
+.feature-icon{
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.6rem;
+  min-width: 1.6rem;
+  font-size: 1rem;
 }
 
 .product-page-actions {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  padding-top: 1rem;
+  gap: 0.75rem;
+  padding-top: 0.25rem;
 }
 
 .product-page-description {
-  margin-top: 2rem;
-  padding-top: 2rem;
+  margin-top: 1.25rem;
+  padding-top: 1.2rem;
   border-top: 1px solid #e0e0e0;
 }
 
@@ -5168,8 +5471,8 @@ body {
 
 .product-page-description p {
   color: var(--gris);
-  line-height: 1.8;
-  font-size: 1rem;
+  line-height: 1.75;
+  font-size: 0.98rem;
 }
 
 /* Responsive para página de producto */
@@ -5219,6 +5522,12 @@ body {
   
   .product-page-title {
     font-size: 1.8rem;
+  }
+
+  .product-page-price-row{
+    flex-direction: column;
+    align-items: flex-start;
+    gap: .4rem;
   }
   
   .product-page-meta {
@@ -5275,5 +5584,219 @@ body {
 .cart-toast.show{
   opacity: 1;
   transform: translateY(0);
+}
+
+/* Checkout / auth context */
+.cart-checkout-hint{
+  font-size: 0.88rem;
+  color: #555;
+  text-align: center;
+  margin: 0 0 0.75rem;
+  line-height: 1.35;
+}
+.cart-checkout-hint[hidden],
+.cart-checkout-hint:empty{
+  display: none !important;
+  margin: 0;
+}
+.auth-context-hint{
+  font-size: 0.92rem;
+  color: #444;
+  background: #f8f4e8;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 8px;
+  padding: 0.65rem 0.85rem;
+  margin: 0 0 1rem;
+  line-height: 1.4;
+}
+.auth-context-hint[hidden]{ display: none !important; }
+.auth-field-hint{
+  display: block;
+  margin-top: 0.45rem;
+  color: #666;
+  font-size: 0.85rem;
+}
+
+/* Perfil en header: con sesión muestra «Hola, nombre» (tipografía de la tienda) */
+.profile-toggle {
+  overflow: visible;
+}
+.profile-toggle .profile-greeting {
+  display: none;
+  font-family: "GFS Didot", serif;
+  font-size: clamp(0.72rem, 1.5vw, 0.92rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: inherit;
+  line-height: 1.2;
+  max-width: 11rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.profile-toggle--logged {
+  position: relative;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  width: auto !important;
+  min-width: min-content;
+  max-width: min(42vw, 220px);
+  height: auto !important;
+  min-height: 40px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.07);
+}
+.profile-toggle--logged:hover {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.55);
+}
+.profile-toggle--logged .profile-greeting {
+  display: block;
+}
+.profile-toggle--logged .profile-icon-svg {
+  display: none !important;
+}
+
+/* Evita que reglas responsive fuercen 40×40 cuando hay sesión */
+.header-actions .profile-toggle--logged {
+  width: auto !important;
+  height: auto !important;
+}
+
+@media (max-width: 520px) {
+  .profile-toggle--logged {
+    max-width: 46vw;
+    padding: 0.28rem 0.55rem;
+  }
+  .profile-toggle .profile-greeting {
+    font-size: 0.68rem;
+    max-width: 8.5rem;
+    letter-spacing: 0.03em;
+  }
+}
+
+/* Página Mi cuenta */
+.account-page {
+  background: #fff;
+  color: #1a1a1a;
+  padding: 2rem 0 4rem;
+  min-height: 50vh;
+}
+.account-container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+.account-logout {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #333;
+  text-decoration: none;
+  margin-bottom: 2rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.account-logout:hover {
+  text-decoration: underline;
+  color: #000;
+}
+.account-title {
+  font-family: "GFS Didot", serif;
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+  color: #111;
+}
+.account-greeting {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 1.05rem;
+  margin: 0 0 1.5rem;
+  color: #333;
+  line-height: 1.5;
+}
+.account-name-highlight {
+  font-weight: 600;
+  color: #111;
+}
+.account-email {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.9rem;
+  color: #666;
+  margin: -0.75rem 0 1.75rem;
+}
+.account-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  margin: 0 0 0.75rem;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #222;
+}
+.account-divider {
+  border: none;
+  border-top: 1px solid #ddd;
+  margin: 0 0 1.5rem;
+}
+.account-orders-loading {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.95rem;
+  color: #666;
+  margin: 0;
+}
+.account-empty {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.95rem;
+  color: #444;
+  margin: 0;
+}
+.account-orders-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.account-order-card {
+  border: 1px solid #e8e8e8;
+  border-radius: 10px;
+  padding: 1rem 1.15rem;
+  background: #fafafa;
+}
+.account-order-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+.account-order-label {
+  font-weight: 600;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.95rem;
+}
+.account-order-estado {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #2e694f;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.account-order-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: #666;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+.account-order-total {
+  color: #111;
+  font-size: 1rem;
 }
 
