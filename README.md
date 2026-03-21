@@ -49,3 +49,7 @@ python3 -m http.server 8080
 | `cd backend && npm install && npm run db:init && npm start` | `cd landing-page && npx serve -l 8080` |
 
 Luego abre: **http://localhost:8080** (inicio) o **http://localhost:8080/tienda** (tienda).
+
+### Pendientes para producción al 100%
+
+Ver **[PENDIENTES-100.md](./PENDIENTES-100.md)** (API en la nube, CORS, compra por WhatsApp, contenido, SEO, etc.).
