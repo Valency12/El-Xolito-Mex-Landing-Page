@@ -2269,6 +2269,7 @@ function applyHeroBanner(banner) {
   const root = document.querySelector('[data-hero-root]');
   if (!root || !banner) return;
 
+  // Solo cambia fondo + textos; el layout (logo, botones, posiciones) se mantiene
   const desktop = resolveSiteAsset(banner.imagen_desktop);
   const mobile = resolveSiteAsset(banner.imagen_mobile || banner.imagen_desktop);
   if (desktop) {
@@ -2280,24 +2281,42 @@ function applyHeroBanner(banner) {
 
   const titleEl = root.querySelector('[data-hero-title]');
   const leadEl = root.querySelector('[data-hero-lead]');
+  const title = (banner.titulo || '').trim();
+  const lead = (banner.subtitulo || '').trim();
+
+  if (titleEl) {
+    titleEl.hidden = false;
+    titleEl.textContent = title || titleEl.dataset.defaultTitle || 'El brillo de una leyenda';
+  }
+  if (leadEl) {
+    leadEl.hidden = false;
+    leadEl.textContent = lead || leadEl.dataset.defaultLead || 'Piezas únicas inspiradas en texturas y colores de México. Hechas a mano, para acompañarte todos los días.';
+  }
+
   const ctaEl = root.querySelector('[data-hero-cta]');
-  const imageEl = root.querySelector('[data-hero-image]');
-
-  if (titleEl && banner.titulo) titleEl.textContent = banner.titulo;
-  if (leadEl && banner.subtitulo) leadEl.textContent = banner.subtitulo;
-
   if (ctaEl) {
     if (banner.enlace) ctaEl.setAttribute('href', banner.enlace);
     if (banner.texto_boton) {
       ctaEl.innerHTML = `<strong>${escapeHtml(banner.texto_boton)}</strong>`;
     }
   }
+}
 
-  // Imagen lateral: móvil del banner, o la misma desktop si no hay móvil
-  const sideImg = resolveSiteAsset(banner.imagen_mobile || banner.imagen_desktop);
-  if (imageEl && sideImg && banner.imagen_mobile) {
-    imageEl.src = encodeURI(sideImg);
-    imageEl.alt = banner.titulo || 'El Xolito Mex';
+function resetHeroToDefault() {
+  const root = document.querySelector('[data-hero-root]');
+  if (!root) return;
+  root.style.removeProperty('--hero-bg');
+  root.style.removeProperty('--hero-bg-mobile');
+
+  const titleEl = root.querySelector('[data-hero-title]');
+  const leadEl = root.querySelector('[data-hero-lead]');
+  if (titleEl) {
+    titleEl.hidden = false;
+    titleEl.textContent = titleEl.dataset.defaultTitle || 'El brillo de una leyenda';
+  }
+  if (leadEl) {
+    leadEl.hidden = false;
+    leadEl.textContent = leadEl.dataset.defaultLead || 'Piezas únicas inspiradas en texturas y colores de México. Hechas a mano, para acompañarte todos los días.';
   }
 }
 
@@ -2314,45 +2333,36 @@ async function loadHeroFromAPI() {
   } catch (err) {
     console.warn('Hero desde API no disponible, se mantiene el default:', err);
   }
+  resetHeroToDefault();
   return false;
 }
 
-const DEALS_FALLBACK = [
-  {
-    titulo: 'Anillos de plata',
-    subtitulo: 'Descuento en la colección de anillos .925',
-    imagen_desktop: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
-    enlace: 'tienda?categoria=anillos',
-    texto_boton: 'Ver oferta',
-    etiqueta: '−20%',
-    precio_anterior: 1100,
-    precio_nuevo: 880
-  },
-  {
-    titulo: 'Pulseras de plata',
-    subtitulo: 'Acabados únicos. Tiempo limitado.',
-    imagen_desktop: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
-    enlace: 'tienda?categoria=pulseras',
-    texto_boton: 'Ver oferta',
-    etiqueta: '−15%',
-    precio_anterior: 820,
-    precio_nuevo: 697
-  },
-  {
-    titulo: 'Colección completa',
-    subtitulo: 'Compra 3 piezas y obtén 25% de descuento.',
-    imagen_desktop: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
-    enlace: 'tienda',
-    texto_boton: 'Ver oferta',
-    etiqueta: '−25%',
-    precio_anterior: 3200,
-    precio_nuevo: 2400
-  }
-];
+function setDealsSectionVisible(visible) {
+  const section = document.getElementById('ofertas');
+  if (section) section.hidden = !visible;
+}
 
 function formatDealPrice(n) {
   if (n == null || n === '') return '';
   return formatCurrency(Number(n));
+}
+
+/** Imagen responsive: desktop + móvil (si existe) */
+function dealMediaHtml(banner, imgClass, alt) {
+  const desktop = resolveSiteAsset(banner.imagen_desktop || banner.imagen_mobile || PLACEHOLDER_IMAGE);
+  const mobile = resolveSiteAsset(banner.imagen_mobile || '');
+  const altText = escapeHtml(alt || 'Oferta');
+  const fallback = PLACEHOLDER_IMAGE;
+
+  if (mobile && mobile !== desktop) {
+    return `
+      <picture class="deals__picture">
+        <source media="(max-width: 720px)" srcset="${encodeURI(mobile)}" />
+        <img src="${encodeURI(desktop)}" alt="${altText}" class="${imgClass}" data-fallback="${fallback}" />
+      </picture>`;
+  }
+
+  return `<img src="${encodeURI(desktop)}" alt="${altText}" class="${imgClass}" data-fallback="${fallback}" />`;
 }
 
 function renderDealsBoard(banners) {
@@ -2360,7 +2370,14 @@ function renderDealsBoard(banners) {
   const lead = document.getElementById('dealsLead');
   if (!board) return;
 
-  const list = (banners && banners.length ? banners : DEALS_FALLBACK).slice(0, 3);
+  const list = (banners && banners.length ? banners : []).slice(0, 3);
+  if (!list.length) {
+    board.innerHTML = '';
+    setDealsSectionVisible(false);
+    return;
+  }
+  setDealsSectionVisible(true);
+
   if (lead) {
     lead.textContent = list.length === 1
       ? 'Una oportunidad de la temporada.'
@@ -2368,6 +2385,12 @@ function renderDealsBoard(banners) {
   }
 
   const hero = list[0];
+  const applyLink = document.getElementById('dealsApplyLink');
+  if (applyLink && hero) {
+    applyLink.href = hero.enlace || 'tienda';
+    applyLink.textContent = 'Aplicar oferta';
+  }
+
   const rest = list.slice(1);
   const heroHref = hero.enlace || 'tienda';
   const heroCta = (hero.texto_boton || '').trim();
@@ -2381,7 +2404,7 @@ function renderDealsBoard(banners) {
 
   let html = `
     <a href="${escapeHtml(heroHref)}" class="deals__hero${rest.length ? '' : ' deals__hero--wide'}">
-      <img src="${encodeURI(hero.imagen_desktop || hero.imagen_mobile || PLACEHOLDER_IMAGE)}" alt="${escapeHtml(heroTitle || 'Oferta especial')}" class="deals__hero-img" data-fallback="${PLACEHOLDER_IMAGE}" />
+      ${dealMediaHtml(hero, 'deals__hero-img', heroTitle || 'Oferta especial')}
       <div class="${overlayClass}">
         ${heroPct ? `<span class="deals__pct">${escapeHtml(heroPct)}</span>` : ''}
         ${heroTitle ? `<h3 class="deals__name">${escapeHtml(heroTitle)}</h3>` : ''}
@@ -2403,7 +2426,7 @@ function renderDealsBoard(banners) {
       html += `
         <a href="${escapeHtml(href)}" class="deals__row">
           <div class="deals__row-media">
-            <img src="${encodeURI(item.imagen_desktop || item.imagen_mobile || PLACEHOLDER_IMAGE)}" alt="${escapeHtml(title || 'Oferta')}" data-fallback="${PLACEHOLDER_IMAGE}" />
+            ${dealMediaHtml(item, 'deals__row-img', title || 'Oferta')}
           </div>
           <div class="deals__row-body">
             ${pct ? `<span class="deals__pct deals__pct--sm">${escapeHtml(pct)}</span>` : ''}
@@ -2428,107 +2451,144 @@ function renderDealsBoard(banners) {
 async function loadDealsFromAPI() {
   try {
     const apiBase = getElXolitoApiBaseForMain();
-    const res = await fetch(`${apiBase}/content/banners?tipo=oferta`);
+    const res = await fetch(`${apiBase}/content/deals`);
     const data = await res.json().catch(() => ({}));
-    const banners = (data.success && data.data && data.data.banners) ? data.data.banners : [];
-    if (banners.length) {
-      renderDealsBoard(banners);
+    const deals = (data.success && data.data && data.data.deals) ? data.data.deals : [];
+    if (deals.length) {
+      renderDealsBoard(deals);
       return true;
     }
   } catch (err) {
-    console.warn('Ofertas desde API no disponibles, usando fallback:', err);
+    console.warn('Ofertas desde API no disponibles:', err);
   }
-  renderDealsBoard(DEALS_FALLBACK);
+  renderDealsBoard([]);
   return false;
 }
 
 function setupVoicesSection() {
   const root = document.querySelector('.voices');
   if (!root || root.dataset.voicesInit === '1') return;
+  root.dataset.voicesInit = '1';
 
-  const entries = [
+  const VOICES_FALLBACK = [
     {
-      text: '“Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante.”',
-      name: 'María González',
-      place: 'Ciudad de México',
-      image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
-      alt: 'Anillo de plata'
+      texto: '“Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante.”',
+      nombre: 'María González',
+      lugar: 'Ciudad de México',
+      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+      tab_label: 'María'
     },
     {
-      text: '“Mi pulsera artesanal es mi pieza favorita. El diseño minimalista combina con todo y la plata se mantiene brillante.”',
-      name: 'Ana Rodríguez',
-      place: 'Guadalajara',
-      image: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
-      alt: 'Pulsera de plata'
+      texto: '“Mi pulsera artesanal es mi pieza favorita. El diseño minimalista combina con todo y la plata se mantiene brillante.”',
+      nombre: 'Ana Rodríguez',
+      lugar: 'Guadalajara',
+      imagen: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
+      tab_label: 'Ana'
     },
     {
-      text: '“El conjunto de aretes y anillo se siente hecho a mano. La calidad justifica la inversión y el servicio fue excelente.”',
-      name: 'Carlos Méndez',
-      place: 'Monterrey',
-      image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
-      alt: 'Pieza de plata'
+      texto: '“El conjunto de aretes y anillo se siente hecho a mano. La calidad justifica la inversión y el servicio fue excelente.”',
+      nombre: 'Carlos Méndez',
+      lugar: 'Monterrey',
+      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
+      tab_label: 'Carlos'
     }
   ];
 
-  const stage = root.querySelector('[data-voices-stage]');
-  const textEl = root.querySelector('[data-voices-text]');
-  const nameEl = root.querySelector('[data-voices-name]');
-  const placeEl = root.querySelector('[data-voices-place]');
-  const imageEl = root.querySelector('[data-voices-image]');
-  const tabs = Array.from(root.querySelectorAll('[data-voices-tab]'));
-  if (!stage || !textEl || !nameEl || !placeEl || !imageEl || !tabs.length) return;
-
-  root.dataset.voicesInit = '1';
-  let current = 0;
-  let timer = null;
-
-  function show(index) {
-    const entry = entries[index];
-    if (!entry) return;
-    current = index;
-    stage.classList.add('is-switching');
-    window.setTimeout(() => {
-      textEl.textContent = entry.text;
-      nameEl.textContent = entry.name;
-      placeEl.textContent = entry.place;
-      imageEl.src = encodeURI(entry.image);
-      imageEl.alt = entry.alt;
-      tabs.forEach((tab, i) => {
-        const active = i === index;
-        tab.classList.toggle('is-active', active);
-        tab.setAttribute('aria-selected', active ? 'true' : 'false');
-      });
-      stage.classList.remove('is-switching');
-    }, 180);
-  }
-
-  function startAuto() {
-    stopAuto();
-    timer = window.setInterval(() => {
-      show((current + 1) % entries.length);
-    }, 6000);
-  }
-
-  function stopAuto() {
-    if (timer) {
-      clearInterval(timer);
-      timer = null;
+  async function loadVoicesEntries() {
+    try {
+      const apiBase = getElXolitoApiBaseForMain();
+      const res = await fetch(`${apiBase}/content/voices`);
+      const data = await res.json().catch(() => ({}));
+      const list = (data.success && data.data && data.data.voices) ? data.data.voices : [];
+      if (list.length) return list;
+    } catch (err) {
+      console.warn('Voces desde API no disponibles, usando fallback:', err);
     }
+    return VOICES_FALLBACK;
   }
 
-  tabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const idx = Number(tab.getAttribute('data-voices-tab'));
-      if (Number.isNaN(idx)) return;
-      show(idx);
-      startAuto();
-    });
-  });
+  loadVoicesEntries().then((raw) => {
+    const entries = raw.map((v) => ({
+      text: v.texto || v.text || '',
+      name: v.nombre || v.name || '',
+      place: v.lugar || v.place || '',
+      image: resolveSiteAsset(v.imagen || v.image || PLACEHOLDER_IMAGE),
+      alt: v.nombre || v.name || 'Pieza de plata',
+      tab: (v.tab_label || v.tab || (v.nombre || v.name || 'Voz').split(' ')[0] || 'Voz').trim()
+    })).filter((e) => e.text && e.name);
 
-  root.addEventListener('mouseenter', stopAuto);
-  root.addEventListener('mouseleave', startAuto);
-  show(0);
-  startAuto();
+    if (!entries.length) return;
+
+    const stage = root.querySelector('[data-voices-stage]');
+    const textEl = root.querySelector('[data-voices-text]');
+    const nameEl = root.querySelector('[data-voices-name]');
+    const placeEl = root.querySelector('[data-voices-place]');
+    const imageEl = root.querySelector('[data-voices-image]');
+    const nav = root.querySelector('[data-voices-nav]');
+    if (!stage || !textEl || !nameEl || !placeEl || !imageEl || !nav) return;
+
+    nav.innerHTML = entries.map((entry, i) => {
+      const num = String(i + 1).padStart(2, '0');
+      return `
+        <button type="button" class="voices__tab${i === 0 ? ' is-active' : ''}" role="tab" aria-selected="${i === 0 ? 'true' : 'false'}" data-voices-tab="${i}">
+          <span class="voices__tab-num">${num}</span>
+          <span class="voices__tab-name">${escapeHtml(entry.tab)}</span>
+        </button>`;
+    }).join('');
+
+    const tabs = Array.from(nav.querySelectorAll('[data-voices-tab]'));
+    let current = 0;
+    let timer = null;
+
+    function show(index) {
+      const entry = entries[index];
+      if (!entry) return;
+      current = index;
+      stage.classList.add('is-switching');
+      window.setTimeout(() => {
+        textEl.textContent = entry.text;
+        nameEl.textContent = entry.name;
+        placeEl.textContent = entry.place;
+        imageEl.src = encodeURI(entry.image);
+        imageEl.alt = entry.alt;
+        tabs.forEach((tab, i) => {
+          const active = i === index;
+          tab.classList.toggle('is-active', active);
+          tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        });
+        stage.classList.remove('is-switching');
+      }, 180);
+    }
+
+    function startAuto() {
+      stopAuto();
+      if (entries.length < 2) return;
+      timer = window.setInterval(() => {
+        show((current + 1) % entries.length);
+      }, 6000);
+    }
+
+    function stopAuto() {
+      if (timer) {
+        clearInterval(timer);
+        timer = null;
+      }
+    }
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        const idx = Number(tab.getAttribute('data-voices-tab'));
+        if (Number.isNaN(idx)) return;
+        show(idx);
+        startAuto();
+      });
+    });
+
+    root.addEventListener('mouseenter', stopAuto);
+    root.addEventListener('mouseleave', startAuto);
+    show(0);
+    startAuto();
+  });
 }
 
 function setupProductModal() {

@@ -15,10 +15,11 @@
   let categories = [];
   let products = [];
   let banners = [];
+  let voices = [];
   let orders = [];
   let currentView = 'products';
   let editingId = null;
-  let modalMode = null; // 'product' | 'banner' | 'order'
+  let modalMode = null; // 'product' | 'banner' | 'voice' | 'order'
 
   function apiBase() {
     return (typeof window.getElXolitoApiBase === 'function'
@@ -63,7 +64,12 @@
       throw new Error('Sesión expirada');
     }
 
-    if (!res.ok) throw new Error(data.message || 'Error en la petición');
+    if (!res.ok) {
+      const msg = data.message || (res.status === 404
+        ? 'Ruta no encontrada. ¿Reiniciaste el backend?'
+        : `Error en la petición (${res.status})`);
+      throw new Error(msg);
+    }
     return data;
   }
 
@@ -126,6 +132,7 @@
     products: 'Productos',
     'banners-oferta': 'Banners / Ofertas',
     'banners-hero': 'Hero / Portada',
+    voices: 'Voces',
     orders: 'Pedidos'
   };
 
@@ -147,6 +154,7 @@
     if (view === 'products') loadProducts();
     else if (view === 'banners-oferta') loadBanners('oferta');
     else if (view === 'banners-hero') loadBanners(['hero', 'portada']);
+    else if (view === 'voices') loadVoices();
     else if (view === 'orders') loadOrders();
   }
 
@@ -158,10 +166,26 @@
       $('#addProductBtn').addEventListener('click', () => openProductModal());
     } else if (currentView === 'banners-oferta') {
       wrap.innerHTML = '<button type="button" class="btn btn-primary" id="addBannerBtn">+ Nuevo banner</button>';
-      $('#addBannerBtn').addEventListener('click', () => openBannerModal('oferta'));
+      $('#addBannerBtn').addEventListener('click', async () => {
+        await ensureProductsLoaded();
+        openBannerModal('oferta');
+      });
     } else if (currentView === 'banners-hero') {
       wrap.innerHTML = '<button type="button" class="btn btn-primary" id="addHeroBtn">+ Nuevo hero / portada</button>';
       $('#addHeroBtn').addEventListener('click', () => openBannerModal('hero'));
+    } else if (currentView === 'voices') {
+      wrap.innerHTML = '<button type="button" class="btn btn-primary" id="addVoiceBtn">+ Nueva voz</button>';
+      $('#addVoiceBtn').addEventListener('click', () => openVoiceModal());
+    }
+  }
+
+  async function ensureProductsLoaded() {
+    if (products.length) return;
+    try {
+      const data = await api('/admin/products?activo=1');
+      products = data.data.products || [];
+    } catch (_) {
+      products = [];
     }
   }
 
@@ -385,34 +409,66 @@
     }
   }
 
+  function bannerCardHtml(b) {
+    const isDraft = !b.activo;
+    return `
+      <article class="banner-card${isDraft ? ' banner-card--draft' : ''}" data-id="${b.id}">
+        <img class="banner-card__img" src="${assetUrl(b.imagen_desktop)}" alt="" />
+        <div class="banner-card__body">
+          <h4 class="banner-card__title">${esc(b.titulo || 'Sin título')}</h4>
+          <p class="banner-card__meta">${b.tipo} · ${isDraft ? 'Borrador' : 'Activo'} · Orden ${b.orden}${b.etiqueta ? ` · ${esc(b.etiqueta)}` : ''}</p>
+          <div class="banner-card__actions">
+            <button type="button" class="btn btn-outline btn-sm" data-edit-banner="${b.id}">Editar</button>
+            ${isDraft
+              ? `<button type="button" class="btn btn-primary btn-sm" data-restore-banner="${b.id}">Publicar</button>
+                 <button type="button" class="btn btn-danger btn-sm" data-purge-banner="${b.id}">Borrar</button>`
+              : `<button type="button" class="btn btn-outline btn-sm" data-archive-banner="${b.id}">Archivar</button>`}
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function bindBannerCardActions(grid) {
+    grid.querySelectorAll('[data-edit-banner]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        await ensureProductsLoaded();
+        openBannerModal(null, parseInt(btn.dataset.editBanner, 10));
+      });
+    });
+    grid.querySelectorAll('[data-archive-banner]').forEach((btn) => {
+      btn.addEventListener('click', () => archiveBanner(parseInt(btn.dataset.archiveBanner, 10)));
+    });
+    grid.querySelectorAll('[data-restore-banner]').forEach((btn) => {
+      btn.addEventListener('click', () => restoreBanner(parseInt(btn.dataset.restoreBanner, 10)));
+    });
+    grid.querySelectorAll('[data-purge-banner]').forEach((btn) => {
+      btn.addEventListener('click', () => purgeBanner(parseInt(btn.dataset.purgeBanner, 10)));
+    });
+  }
+
   function renderBannersGrid(gridId, tipos) {
     const grid = $(`#${gridId}`);
     const filtered = banners.filter((b) => tipos.includes(b.tipo));
+    const active = filtered.filter((b) => b.activo);
+    const drafts = filtered.filter((b) => !b.activo);
 
     if (!filtered.length) {
       grid.innerHTML = '<div class="empty-state">No hay contenido aún. Usa el botón de arriba para crear uno.</div>';
       return;
     }
 
-    grid.innerHTML = filtered.map((b) => `
-      <article class="banner-card" data-id="${b.id}">
-        <img class="banner-card__img" src="${assetUrl(b.imagen_desktop)}" alt="" />
-        <div class="banner-card__body">
-          <h4 class="banner-card__title">${esc(b.titulo || 'Sin título')}</h4>
-          <p class="banner-card__meta">${b.tipo} · ${b.activo ? 'Activo' : 'Inactivo'} · Orden ${b.orden}${b.etiqueta ? ` · ${esc(b.etiqueta)}` : ''}</p>
-          <div class="banner-card__actions">
-            <button type="button" class="btn btn-outline btn-sm" data-edit-banner="${b.id}">Editar</button>
-            <button type="button" class="btn btn-danger btn-sm" data-del-banner="${b.id}">Eliminar</button>
-          </div>
-        </div>
-      </article>`).join('');
+    let html = '';
+    if (active.length) {
+      html += `<div class="cards-grid__section"><h3 class="cards-grid__heading">Publicados</h3><div class="cards-grid__inner">${active.map(bannerCardHtml).join('')}</div></div>`;
+    } else {
+      html += '<div class="empty-state empty-state--inline">No hay banners publicados. El sitio muestra el contenido por defecto.</div>';
+    }
+    if (drafts.length) {
+      html += `<div class="cards-grid__section"><h3 class="cards-grid__heading">Borradores <span class="cards-grid__count">${drafts.length}</span></h3><p class="cards-grid__note">Se guardan al archivar. Puedes republicarlos o borrarlos del todo.</p><div class="cards-grid__inner">${drafts.map(bannerCardHtml).join('')}</div></div>`;
+    }
 
-    grid.querySelectorAll('[data-edit-banner]').forEach((btn) => {
-      btn.addEventListener('click', () => openBannerModal(null, parseInt(btn.dataset.editBanner, 10)));
-    });
-    grid.querySelectorAll('[data-del-banner]').forEach((btn) => {
-      btn.addEventListener('click', () => deleteBanner(parseInt(btn.dataset.delBanner, 10)));
-    });
+    grid.innerHTML = html;
+    bindBannerCardActions(grid);
   }
 
   function openBannerModal(defaultTipo = 'oferta', id = null) {
@@ -420,6 +476,7 @@
     modalMode = 'banner';
     const b = id ? banners.find((x) => x.id === id) : null;
     const tipo = b?.tipo || defaultTipo;
+    const isOferta = tipo === 'oferta';
 
     $('#modalTitle').textContent = b ? 'Editar banner' : 'Nuevo banner';
 
@@ -427,23 +484,35 @@
       `<option value="${t}" ${tipo === t ? 'selected' : ''}>${t}</option>`
     ).join('');
 
+    const productOptions = ['<option value="">— Sin vincular (manual) —</option>']
+      .concat(products.map((p) => {
+        const label = `${p.nombre} · ${formatPrice(p.precio)}${p.stock > 0 ? '' : ' (sin stock)'}`;
+        return `<option value="${p.id}" ${String(b?.producto_id) === String(p.id) ? 'selected' : ''}>${esc(label)}</option>`;
+      }))
+      .join('');
+
     $('#modalBody').innerHTML = `
       <form id="bannerForm" class="form-grid">
         <div class="form-field">
           <label>Tipo *</label>
-          <select name="tipo">${tipoOptions}</select>
+          <select name="tipo" id="bannerTipo">${tipoOptions}</select>
         </div>
         <div class="form-field">
           <label>Orden</label>
           <input name="orden" type="number" value="${b?.orden ?? 0}" />
         </div>
+        ${isOferta ? `
         <div class="form-field form-field--full">
-          <label>Título <span class="label-hint">(opcional — déjalo vacío si la imagen ya trae el texto)</span></label>
-          <input name="titulo" value="${escAttr(b?.titulo)}" placeholder="Vacío = no se muestra texto encima" />
+          <label>Producto vinculado <span class="label-hint">(recomendado: toma foto, nombre y precio del inventario)</span></label>
+          <select name="producto_id" id="bannerProducto">${productOptions}</select>
+        </div>` : ''}
+        <div class="form-field form-field--full">
+          <label>Título <span class="label-hint">(opcional — con producto se usa el nombre del producto si lo dejas vacío)</span></label>
+          <input name="titulo" value="${escAttr(b?.titulo)}" placeholder="Ej. Anillo Centauro" />
         </div>
         <div class="form-field form-field--full">
           <label>Subtítulo</label>
-          <input name="subtitulo" value="${escAttr(b?.subtitulo)}" />
+          <input name="subtitulo" value="${escAttr(b?.subtitulo)}" placeholder="Ej. Oro de 14k" />
         </div>
         <div class="form-field">
           <label>Etiqueta (ej. −20%)</label>
@@ -458,15 +527,15 @@
           <input name="precio_anterior" type="number" step="0.01" min="0" value="${b?.precio_anterior ?? ''}" />
         </div>
         <div class="form-field">
-          <label>Precio nuevo</label>
+          <label>Precio nuevo / actual</label>
           <input name="precio_nuevo" type="number" step="0.01" min="0" value="${b?.precio_nuevo ?? ''}" />
         </div>
         <div class="form-field form-field--full">
           <label>Enlace (URL o ruta)</label>
-          <input name="enlace" value="${escAttr(b?.enlace)}" placeholder="tienda?categoria=anillos" />
+          <input name="enlace" value="${escAttr(b?.enlace)}" placeholder="producto?id=50" />
         </div>
         <div class="form-field">
-          <label><input type="checkbox" name="activo" ${!b || b.activo ? 'checked' : ''} /> Activo</label>
+          <label><input type="checkbox" name="activo" ${!b || b.activo ? 'checked' : ''} /> Publicado (activo en el sitio)</label>
         </div>
         <div class="form-field">
           <label>Inicio vigencia</label>
@@ -477,7 +546,7 @@
           <input name="fecha_fin" type="datetime-local" value="${toDatetimeLocal(b?.fecha_fin)}" />
         </div>
         <div class="form-field form-field--full">
-          <label>Imagen principal (desktop) *</label>
+          <label>Imagen principal (desktop) ${isOferta ? '<span class="label-hint">(opcional si hay producto vinculado)</span>' : '*'}</label>
           <div class="image-upload">
             ${b?.imagen_desktop ? `<img class="image-upload__preview" id="bannerImgPreview" src="${assetUrl(b.imagen_desktop)}" alt="" />` : '<img class="image-upload__preview" id="bannerImgPreview" hidden alt="" />'}
             <input type="hidden" name="imagen_desktop" id="bannerImgPath" value="${escAttr(b?.imagen_desktop)}" />
@@ -503,6 +572,31 @@
     $('#modalSaveBtn').addEventListener('click', saveBanner);
     $('#bannerImgFile').addEventListener('change', (e) => uploadImage(e.target.files[0], 'bannerImgPath', 'bannerImgPreview'));
     $('#bannerMobileFile').addEventListener('change', (e) => uploadImage(e.target.files[0], 'bannerMobilePath', 'bannerMobilePreview'));
+
+    const productSelect = $('#bannerProducto');
+    if (productSelect) {
+      productSelect.addEventListener('change', () => {
+        const p = products.find((x) => String(x.id) === String(productSelect.value));
+        if (!p) return;
+        const form = $('#bannerForm');
+        form.querySelector('[name=titulo]').value = p.nombre || '';
+        form.querySelector('[name=subtitulo]').value = p.material || p.categoria || '';
+        form.querySelector('[name=precio_nuevo]').value = p.precio ?? '';
+        form.querySelector('[name=precio_anterior]').value = p.precio_anterior ?? '';
+        form.querySelector('[name=enlace]').value = `producto?id=${p.id}`;
+        if (p.precio_anterior && p.precio && p.precio_anterior > p.precio) {
+          const pct = Math.round((1 - p.precio / p.precio_anterior) * 100);
+          form.querySelector('[name=etiqueta]').value = pct > 0 ? `−${pct}%` : '';
+        }
+        if (p.imagen_path) {
+          $('#bannerImgPath').value = p.imagen_path;
+          const preview = $('#bannerImgPreview');
+          preview.src = assetUrl(p.imagen_path);
+          preview.hidden = false;
+        }
+      });
+    }
+
     $('#modalOverlay').hidden = false;
   }
 
@@ -522,8 +616,9 @@
       activo: form.querySelector('[name=activo]').checked,
       fecha_inicio: fd.get('fecha_inicio') || null,
       fecha_fin: fd.get('fecha_fin') || null,
-      imagen_desktop: fd.get('imagen_desktop'),
-      imagen_mobile: fd.get('imagen_mobile') || null
+      imagen_desktop: fd.get('imagen_desktop') || null,
+      imagen_mobile: fd.get('imagen_mobile') || null,
+      producto_id: fd.get('producto_id') || null
     };
 
     const errEl = $('#modalFormError');
@@ -538,21 +633,184 @@
         showToast('Banner creado');
       }
       closeModal();
-      if (currentView === 'banners-oferta') loadBanners('oferta');
-      else loadBanners(['hero', 'portada']);
+      reloadCurrentBanners();
     } catch (err) {
       errEl.textContent = err.message;
       errEl.hidden = false;
     }
   }
 
-  async function deleteBanner(id) {
-    if (!confirm('¿Eliminar este banner?')) return;
+  function reloadCurrentBanners() {
+    if (currentView === 'banners-oferta') loadBanners('oferta');
+    else loadBanners(['hero', 'portada']);
+  }
+
+  async function archiveBanner(id) {
+    if (!confirm('¿Archivar este banner? Se guarda como borrador y deja de mostrarse en el sitio.')) return;
+    try {
+      await api(`/admin/banners/${id}`, { method: 'PATCH', body: JSON.stringify({ activo: false }) });
+      showToast('Banner archivado en borradores');
+      reloadCurrentBanners();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function restoreBanner(id) {
+    try {
+      await api(`/admin/banners/${id}`, { method: 'PATCH', body: JSON.stringify({ activo: true }) });
+      showToast('Banner publicado');
+      reloadCurrentBanners();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  async function purgeBanner(id) {
+    if (!confirm('¿Borrar este borrador de forma permanente? No se puede deshacer.')) return;
     try {
       await api(`/admin/banners/${id}`, { method: 'DELETE' });
-      showToast('Banner eliminado');
-      if (currentView === 'banners-oferta') loadBanners('oferta');
-      else loadBanners(['hero', 'portada']);
+      showToast('Borrador eliminado');
+      reloadCurrentBanners();
+    } catch (err) {
+      showToast(err.message, true);
+    }
+  }
+
+  // ── Voces ──
+  async function loadVoices() {
+    const grid = $('#voicesGrid');
+    if (!grid) return;
+    grid.innerHTML = '<div class="empty-state">Cargando...</div>';
+    try {
+      const data = await api('/admin/voices');
+      voices = data.data.voices || [];
+      renderVoicesGrid();
+    } catch (err) {
+      grid.innerHTML = `<div class="empty-state">${err.message}</div>`;
+    }
+  }
+
+  function renderVoicesGrid() {
+    const grid = $('#voicesGrid');
+    if (!voices.length) {
+      grid.innerHTML = '<div class="empty-state">No hay voces aún. Usa el botón de arriba para crear una.</div>';
+      return;
+    }
+
+    grid.innerHTML = `<div class="cards-grid__inner">${voices.map((v) => `
+      <article class="banner-card${!v.activo ? ' banner-card--draft' : ''}" data-id="${v.id}">
+        <img class="banner-card__img" src="${assetUrl(v.imagen || 'assets/Anillos/anillo.png')}" alt="" />
+        <div class="banner-card__body">
+          <h4 class="banner-card__title">${esc(v.nombre)}</h4>
+          <p class="banner-card__meta">${v.activo ? 'Activa' : 'Inactiva'} · Orden ${v.orden}${v.lugar ? ` · ${esc(v.lugar)}` : ''}</p>
+          <p class="banner-card__meta">${esc((v.texto || '').slice(0, 110))}${(v.texto || '').length > 110 ? '…' : ''}</p>
+          <div class="banner-card__actions">
+            <button type="button" class="btn btn-outline btn-sm" data-edit-voice="${v.id}">Editar</button>
+            <button type="button" class="btn btn-danger btn-sm" data-del-voice="${v.id}">Eliminar</button>
+          </div>
+        </div>
+      </article>`).join('')}</div>`;
+
+    grid.querySelectorAll('[data-edit-voice]').forEach((btn) => {
+      btn.addEventListener('click', () => openVoiceModal(parseInt(btn.dataset.editVoice, 10)));
+    });
+    grid.querySelectorAll('[data-del-voice]').forEach((btn) => {
+      btn.addEventListener('click', () => deleteVoice(parseInt(btn.dataset.delVoice, 10)));
+    });
+  }
+
+  function openVoiceModal(id = null) {
+    editingId = id;
+    modalMode = 'voice';
+    const v = id ? voices.find((x) => x.id === id) : null;
+
+    $('#modalTitle').textContent = v ? 'Editar voz' : 'Nueva voz';
+    $('#modalBody').innerHTML = `
+      <form id="voiceForm" class="form-grid">
+        <div class="form-field form-field--full">
+          <label>Texto de la opinión *</label>
+          <textarea name="texto" rows="4" required placeholder="“La calidad es impresionante…”">${esc(v?.texto)}</textarea>
+        </div>
+        <div class="form-field">
+          <label>Nombre *</label>
+          <input name="nombre" required value="${escAttr(v?.nombre)}" placeholder="María González" />
+        </div>
+        <div class="form-field">
+          <label>Lugar</label>
+          <input name="lugar" value="${escAttr(v?.lugar)}" placeholder="Ciudad de México" />
+        </div>
+        <div class="form-field">
+          <label>Etiqueta pestaña</label>
+          <input name="tab_label" value="${escAttr(v?.tab_label)}" placeholder="María" />
+        </div>
+        <div class="form-field">
+          <label>Orden</label>
+          <input name="orden" type="number" value="${v?.orden ?? voices.length}" />
+        </div>
+        <div class="form-field form-field--full">
+          <label><input type="checkbox" name="activo" ${!v || v.activo ? 'checked' : ''} /> Publicada en el sitio</label>
+        </div>
+        <div class="form-field form-field--full">
+          <label>Imagen</label>
+          <div class="image-upload">
+            ${v?.imagen ? `<img class="image-upload__preview" id="voiceImgPreview" src="${assetUrl(v.imagen)}" alt="" />` : '<img class="image-upload__preview" id="voiceImgPreview" hidden alt="" />'}
+            <input type="hidden" name="imagen" id="voiceImgPath" value="${escAttr(v?.imagen)}" />
+            <input type="file" id="voiceImgFile" accept="image/jpeg,image/png,image/webp,image/gif" />
+          </div>
+        </div>
+        <p id="modalFormError" class="form-error form-field--full" hidden></p>
+      </form>`;
+
+    $('#modalFooter').innerHTML = `
+      <button type="button" class="btn btn-outline" id="modalCancelBtn">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="modalSaveBtn">${v ? 'Guardar' : 'Crear voz'}</button>`;
+
+    $('#modalCancelBtn').addEventListener('click', closeModal);
+    $('#modalSaveBtn').addEventListener('click', saveVoice);
+    $('#voiceImgFile').addEventListener('change', (e) => uploadImage(e.target.files[0], 'voiceImgPath', 'voiceImgPreview'));
+    $('#modalOverlay').hidden = false;
+  }
+
+  async function saveVoice() {
+    const form = $('#voiceForm');
+    const fd = new FormData(form);
+    const body = {
+      texto: fd.get('texto'),
+      nombre: fd.get('nombre'),
+      lugar: fd.get('lugar') || null,
+      tab_label: fd.get('tab_label') || null,
+      orden: fd.get('orden'),
+      activo: form.querySelector('[name=activo]').checked,
+      imagen: fd.get('imagen') || null
+    };
+
+    const errEl = $('#modalFormError');
+    errEl.hidden = true;
+
+    try {
+      if (editingId) {
+        await api(`/admin/voices/${editingId}`, { method: 'PATCH', body: JSON.stringify(body) });
+        showToast('Voz actualizada');
+      } else {
+        await api('/admin/voices', { method: 'POST', body: JSON.stringify(body) });
+        showToast('Voz creada');
+      }
+      closeModal();
+      loadVoices();
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.hidden = false;
+    }
+  }
+
+  async function deleteVoice(id) {
+    const v = voices.find((x) => x.id === id);
+    if (!confirm(`¿Eliminar la voz de «${v?.nombre || 'esta persona'}»?`)) return;
+    try {
+      await api(`/admin/voices/${id}`, { method: 'DELETE' });
+      showToast('Voz eliminada');
+      loadVoices();
     } catch (err) {
       showToast(err.message, true);
     }

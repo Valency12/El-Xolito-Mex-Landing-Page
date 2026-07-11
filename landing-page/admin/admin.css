@@ -404,6 +404,44 @@ h1, h2, h3, .login-title, .topbar-title, .modal-header h3 {
 }
 
 .cards-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.cards-grid__section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cards-grid__heading {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cards-grid__count {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gris);
+  background: #f0f0f0;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+}
+
+.cards-grid__note {
+  margin: 0;
+  font-size: 0.82rem;
+  color: var(--gris);
+}
+
+.cards-grid__inner {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 1.25rem;
@@ -414,6 +452,16 @@ h1, h2, h3, .login-title, .topbar-title, .modal-header h3 {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+}
+
+.banner-card--draft {
+  opacity: 0.88;
+  border: 1px dashed #c8c8c8;
+  box-shadow: none;
+}
+
+.banner-card--draft .banner-card__img {
+  filter: grayscale(0.35);
 }
 
 .banner-card__img {
@@ -446,13 +494,19 @@ h1, h2, h3, .login-title, .topbar-title, .modal-header h3 {
 }
 
 .empty-state {
-  grid-column: 1 / -1;
   text-align: center;
   padding: 3rem;
   color: var(--gris);
   background: var(--blanco);
   border-radius: var(--radius);
   border: 2px dashed #ddd;
+}
+
+.empty-state--inline {
+  padding: 1.25rem 1.5rem;
+  text-align: left;
+  border-style: solid;
+  border-color: #e8e8e8;
 }
 
 /* ── Modal ── */

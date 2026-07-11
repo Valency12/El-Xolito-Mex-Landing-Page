@@ -27,8 +27,12 @@ function parseBannerBody(body, partial = false) {
 
   if (!partial || body.imagen_desktop !== undefined) {
     const img = String(body.imagen_desktop || '').trim();
-    if (!img) errors.push('La imagen principal es obligatoria');
-    else data.imagen_desktop = img;
+    const productId = body.producto_id != null && body.producto_id !== ''
+      ? parseInt(body.producto_id, 10)
+      : null;
+    if (!img && !productId) errors.push('La imagen principal es obligatoria (o vincula un producto)');
+    else if (img) data.imagen_desktop = img;
+    else data.imagen_desktop = null;
   }
 
   if (body.titulo !== undefined) data.titulo = String(body.titulo || '').trim() || null;
@@ -39,6 +43,14 @@ function parseBannerBody(body, partial = false) {
   if (body.etiqueta !== undefined) data.etiqueta = String(body.etiqueta || '').trim() || null;
   if (body.fecha_inicio !== undefined) data.fecha_inicio = body.fecha_inicio || null;
   if (body.fecha_fin !== undefined) data.fecha_fin = body.fecha_fin || null;
+
+  if (body.producto_id !== undefined) {
+    if (body.producto_id === null || body.producto_id === '') data.producto_id = null;
+    else {
+      const pid = parseInt(body.producto_id, 10);
+      data.producto_id = Number.isNaN(pid) ? null : pid;
+    }
+  }
 
   if (body.precio_anterior !== undefined) {
     if (body.precio_anterior === null || body.precio_anterior === '') data.precio_anterior = null;
@@ -120,12 +132,28 @@ router.post('/', (req, res) => {
       return res.status(400).json({ success: false, message: errors.join('. ') });
     }
 
+    if (data.producto_id && !data.imagen_desktop) {
+      const prod = db.prepare('SELECT imagen_path, nombre, precio, precio_anterior FROM productos WHERE id = ?').get(data.producto_id);
+      if (!prod) {
+        return res.status(400).json({ success: false, message: 'Producto vinculado no encontrado' });
+      }
+      data.imagen_desktop = prod.imagen_path || 'assets/Anillos/anillo.png';
+      if (data.titulo == null) data.titulo = prod.nombre;
+      if (data.precio_nuevo == null) data.precio_nuevo = prod.precio;
+      if (data.precio_anterior == null) data.precio_anterior = prod.precio_anterior;
+      if (data.enlace == null) data.enlace = `producto?id=${data.producto_id}`;
+    }
+
+    if (!data.imagen_desktop) {
+      return res.status(400).json({ success: false, message: 'La imagen principal es obligatoria' });
+    }
+
     const result = db.prepare(`
       INSERT INTO banners (
         tipo, titulo, subtitulo, imagen_desktop, imagen_mobile, enlace,
-        texto_boton, etiqueta, precio_anterior, precio_nuevo,
+        texto_boton, etiqueta, precio_anterior, precio_nuevo, producto_id,
         activo, orden, fecha_inicio, fecha_fin, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
     `).run(
       data.tipo || 'oferta',
       data.titulo ?? null,
@@ -137,6 +165,7 @@ router.post('/', (req, res) => {
       data.etiqueta ?? null,
       data.precio_anterior ?? null,
       data.precio_nuevo ?? null,
+      data.producto_id ?? null,
       data.activo ?? 1,
       data.orden ?? 0,
       data.fecha_inicio ?? null,
@@ -173,6 +202,11 @@ router.patch('/:id', (req, res) => {
     }
     if (Object.keys(data).length === 0) {
       return res.status(400).json({ success: false, message: 'No hay campos para actualizar' });
+    }
+
+    if (data.producto_id && (data.imagen_desktop === null || data.imagen_desktop === undefined)) {
+      const prod = db.prepare('SELECT imagen_path FROM productos WHERE id = ?').get(data.producto_id);
+      if (prod?.imagen_path) data.imagen_desktop = prod.imagen_path;
     }
 
     const sets = Object.keys(data).map((k) => `${k} = ?`);

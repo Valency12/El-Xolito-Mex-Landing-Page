@@ -50,6 +50,9 @@
         <button type="button" class="nav-item" data-view="banners-hero">
           <span class="nav-icon">◻</span> Hero / Portada
         </button>
+        <button type="button" class="nav-item" data-view="voices">
+          <span class="nav-icon">❝</span> Voces
+        </button>
         <button type="button" class="nav-item" data-view="orders">
           <span class="nav-icon">☰</span> Pedidos
         </button>
@@ -102,14 +105,20 @@
 
       <!-- Vista: Banners oferta -->
       <section id="view-banners-oferta" class="admin-view" hidden>
-        <p class="view-hint">Ofertas de la landing (hasta 3). Completa etiqueta (−20%), precios e imagen. El primero en orden es la oferta grande.</p>
+        <p class="view-hint">Ofertas reales del inventario. Vincula un producto para usar su foto, nombre y precio. Si el producto tiene “precio anterior” &gt; precio, se muestra el descuento. Sin ofertas publicadas ni productos en descuento, la sección se oculta en el sitio (ya no hay textos inventados).</p>
         <div class="cards-grid" id="bannersOfertaGrid"></div>
       </section>
 
       <!-- Vista: Hero -->
       <section id="view-banners-hero" class="admin-view" hidden>
-        <p class="view-hint">Hero de la landing. El primero activo (por orden) define fondo, título, subtítulo y botón. Usa imagen desktop (fondo) e imagen móvil opcional (fondo en celular / detalle).</p>
+        <p class="view-hint">Hero de la landing. El layout no cambia: logo, botones y posiciones se mantienen. Desde aquí solo actualizas la imagen de fondo (desktop/móvil), el título y el subtítulo. Sin hero activo, vuelve el fondo y textos por defecto.</p>
         <div class="cards-grid" id="bannersHeroGrid"></div>
+      </section>
+
+      <!-- Vista: Voces -->
+      <section id="view-voices" class="admin-view" hidden>
+        <p class="view-hint">Opiniones de la sección Voces. Hasta 6 activas recomendadas. Orden define las pestañas (01, 02…). Si no hay activas, el sitio usa las opiniones por defecto.</p>
+        <div class="cards-grid" id="voicesGrid"></div>
       </section>
 
       <!-- Vista: Pedidos -->

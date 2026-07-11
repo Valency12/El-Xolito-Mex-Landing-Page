@@ -13,6 +13,7 @@ const adminProductsRouter = require('./routes/admin/products');
 const adminBannersRouter = require('./routes/admin/banners');
 const adminUploadRouter = require('./routes/admin/upload');
 const adminOrdersRouter = require('./routes/admin/orders');
+const adminVoicesRouter = require('./routes/admin/voices');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -39,6 +40,7 @@ app.use('/api/admin/products', adminProductsRouter);
 app.use('/api/admin/banners', adminBannersRouter);
 app.use('/api/admin/upload', adminUploadRouter);
 app.use('/api/admin/orders', adminOrdersRouter);
+app.use('/api/admin/voices', adminVoicesRouter);
 
 // Health
 app.get('/api/health', (req, res) => {
@@ -52,6 +54,6 @@ app.listen(PORT, () => {
   console.log(`  Auth:       POST http://localhost:${PORT}/api/auth/register | /api/auth/login`);
   console.log(`  Carrito:    GET/POST/PATCH/DELETE http://localhost:${PORT}/api/cart (auth)`);
   console.log(`  Pedidos:    POST/GET http://localhost:${PORT}/api/orders (auth)`);
-  console.log(`  Contenido:  GET http://localhost:${PORT}/api/content/banners`);
-  console.log(`  Admin:      /api/admin/products | /api/admin/banners | /api/admin/orders | /api/admin/upload`);
+  console.log(`  Contenido:  GET http://localhost:${PORT}/api/content/banners | /voices`);
+  console.log(`  Admin:      /api/admin/products | /api/admin/banners | /api/admin/voices | /api/admin/orders | /api/admin/upload`);
 });
