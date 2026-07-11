@@ -9,10 +9,10 @@
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script async src="//www.instagram.com/embed.js"></script>
 
-  <!-- Google Fonts: GFS Didot -->
+  <!-- Google Fonts: Cormorant Garamond + Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=GFS+Didot&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=Montserrat:ital,wght@0,300;0,400;0,500;0,600;0,700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
 </head>
@@ -56,182 +56,171 @@
   </header>
 
   <main>
-    <section class="hero">
+    <section class="hero" id="siteHero" data-hero-root>
       <div class="container hero-grid">
         <div class="hero-copy">
           <img class="hero-logo" src="assets/Logos/logo3.jpeg" alt="El Xolito Mex"  />
-          <h2 class="display">El brillo de una leyenda</h2>
-          <p class="lead">Piezas únicas inspiradas en texturas y colores de México. Hechas a mano, para acompañarte
+          <h2 class="display" data-hero-title>El brillo de una leyenda</h2>
+          <p class="lead" data-hero-lead>Piezas únicas inspiradas en texturas y colores de México. Hechas a mano, para acompañarte
             todos los días.</p>
           <div class="hero-cta">
-            <a href="tienda" class="btn btn-hero"><strong>Ver tienda completa</strong></a>
-            <a href="#destacados" class="btn btn-outline" onclick="event.preventDefault(); document.querySelector('#destacados').scrollIntoView({ behavior: 'smooth' });">Ver destacados</a>
+            <a href="tienda" class="btn btn-hero" data-hero-cta><strong>Ver tienda</strong></a>
+            <a href="#destacados" class="btn btn-outline" data-hero-secondary onclick="event.preventDefault(); document.querySelector('#destacados').scrollIntoView({ behavior: 'smooth' });">Ver destacados</a>
           </div>
         </div>
         <div class="hero-media" aria-hidden="true">
-          <img src="assets/Anillos/anillo.png" alt="Joyería mexicana minimalista" class="hero-image" />
-
+          <img src="assets/Anillos/anillo.png" alt="Joyería mexicana minimalista" class="hero-image" data-hero-image />
         </div>
       </div>
     </section>
 
-    <section id="ofertas" class="offers">
+    <section id="ofertas" class="deals">
+      <div class="container deals__top">
+        <div class="deals__copy">
+          <h2 class="deals__title">Ofertas</h2>
+          <p class="deals__lead" id="dealsLead">Oportunidades de la temporada.</p>
+        </div>
+        <a href="tienda" class="btn deals__link">Ver todas</a>
+      </div>
+      <div id="dealsBoard" class="container deals__board" aria-live="polite">
+        <!-- Ofertas desde API (banners tipo oferta) -->
+      </div>
+    </section>
+
+
+    <section id="destacados" class="featured-picks">
+      <div class="container featured-picks__top">
+        <div class="featured-picks__copy">
+          <h2 class="featured-picks__title">Destacados</h2>
+          <p class="featured-picks__lead">Cuatro piezas que definen la colección.</p>
+        </div>
+        <a href="tienda" class="btn btn-outline featured-picks__link">Ver tienda</a>
+      </div>
+      <div id="featuredGrid" class="featured-picks__rail" aria-live="polite">
+        <!-- 4 productos destacados desde la API -->
+      </div>
+    </section>
+
+    <section id="testimonios" class="voices">
+      <div class="container voices__inner">
+        <header class="voices__header">
+          <h2 class="voices__title">Voces</h2>
+          <p class="voices__lead">Quienes ya llevan una pieza.</p>
+        </header>
+
+        <div class="voices__stage" data-voices-stage>
+          <figure class="voices__visual">
+            <img data-voices-image src="assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png" alt="" />
+          </figure>
+          <blockquote class="voices__quote">
+            <p data-voices-text>“Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante.”</p>
+            <footer class="voices__meta">
+              <cite data-voices-name>María González</cite>
+              <span data-voices-place>Ciudad de México</span>
+            </footer>
+          </blockquote>
+        </div>
+
+        <div class="voices__nav" role="tablist" aria-label="Opiniones">
+          <button type="button" class="voices__tab is-active" role="tab" aria-selected="true" data-voices-tab="0">
+            <span class="voices__tab-num">01</span>
+            <span class="voices__tab-name">María</span>
+          </button>
+          <button type="button" class="voices__tab" role="tab" aria-selected="false" data-voices-tab="1">
+            <span class="voices__tab-num">02</span>
+            <span class="voices__tab-name">Ana</span>
+          </button>
+          <button type="button" class="voices__tab" role="tab" aria-selected="false" data-voices-tab="2">
+            <span class="voices__tab-num">03</span>
+            <span class="voices__tab-name">Carlos</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section id="historia" class="history history-story">
       <div class="container">
-        <h2 class="section-title">Ofertas especiales</h2>
-        <div class="offers-grid">
-          <div class="offer-card">
-            <div class="offer-badge">-20%</div>
-            <img src="assets/Pulseras/pulsera cubana.png" alt="Anillos de plata" class="offer-image" />
-            <h3>Anillos de plata</h3>
-            <p>Descuento en toda la colección de anillos de plata .925</p>
-            <div class="offer-price">
-              <span class="old-price">$1,100</span>
-              <span class="new-price">$880</span>
-            </div>
-            <a href="tienda?filter=anillos" class="btn btn-primary">Ver oferta</a>
-          </div>
-          <div class="offer-card">
-            <div class="offer-badge">-15%</div>
-            <img src="assets/Pulseras/pulsera cordon.png" alt="Pulseras de plata" class="offer-image" />
-            <h3>Pulseras de plata</h3>
-            <p>Plata .925 con acabados únicos. Oferta limitada</p>
-            <div class="offer-price">
-              <span class="old-price">$820</span>
-              <span class="new-price">$697</span>
-            </div>
-            <a href="tienda?filter=pulseras" class="btn btn-primary">Ver oferta</a>
-          </div>
-          <div class="offer-card">
-            <div class="offer-badge">-25%</div>
-            <img src="assets/Pulseras/brazalete_canasta.png" alt="Conjunto de plata" class="offer-image" />
-            <h3>Colección completa</h3>
-            <p>Compra 3 piezas y obtén 25% de descuento</p>
-            <div class="offer-price">
-              <span class="old-price">$3,200</span>
-              <span class="new-price">$2,400</span>
-            </div>
-            <a href="tienda" class="btn btn-primary">Ver oferta</a>
-          </div>
+        <div class="history-story__top">
+          <h2 class="history-story__title">Nuestra historia</h2>
+          <p class="history-story__lead">De un taller a cada rincón del mundo.</p>
         </div>
-      </div>
-    </section>
-
-
-    <section id="destacados" class="piezas-destacadas-container">
-      <h2 class="section-title piezas-destacadas">Piezas Destacadas</h2>
-
-      <div class="piezas-des-carousel">
-        <div class="piezas-des-slides-container">
-          <div class="piezas-des-slides" id="featuredCarousel" aria-live="polite">
-            <!-- Las diapositivas se generan en main.js (FEATURED_SHOWCASE_SLIDES) -->
-          </div>
-        </div>
-      </div>
-
-        <div class="piezas-des-controls">
-          <div class="piezas-des-dots">
-            <!-- Los puntos se generarán dinámicamente con JavaScript -->
-          </div>
-        </div>
-    </section>
-
-    <section id="testimonios" class="testimonials">
-      <div class="container">
-        <h2 class="section-title">¡Lo dicen ellos!</h2>
-        <div class="testimonials-grid">
-          <div class="testimonial">
-            <div class="testimonial-product-image">
-              <img src="assets/Anillos/anillo_piedra.png" alt="Anillo de plata" />
-            </div>
-            <div class="testimonial-content">
-              <p>"Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante. Lo uso todos los días y sigue luciendo perfecto. Definitivamente compraré más piezas."</p>
-            </div>
-            <div class="testimonial-author">
-              <div class="author-avatar">M</div>
-              <div class="author-info">
-                <h4>María González</h4>
-                <span>Ciudad de México</span>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial">
-            <div class="testimonial-product-image">
-              <img src="assets/Pulseras/brazalete_canasta.png" alt="Pulsera de plata" />
-            </div>
-            <div class="testimonial-content">
-              <p>"Mi pulsera de plata artesanal es mi pieza favorita. La elegancia del diseño minimalista combina perfecto con todo. La plata se mantiene brillante y es muy cómoda de usar. Recomiendo totalmente sus conjuntos."</p>
-            </div>
-            <div class="testimonial-author">
-              <div class="author-avatar">A</div>
-              <div class="author-info">
-                <h4>Ana Rodríguez</h4>
-                <span>Guadalajara</span>
-              </div>
-            </div>
-          </div>
-          <div class="testimonial">
-            <div class="testimonial-product-image">
-              <img src="assets/Conjuntos/conjunto_turquesa.png" alt="Conjunto de plata" />
-            </div>
-            <div class="testimonial-content">
-              <p>"Compré un conjunto completo de aretes y anillo en plata. La atención al detalle es excepcional y se nota que son piezas hechas a mano. La elegancia y calidad justifican totalmente la inversión. Excelente servicio."</p>
-            </div>
-            <div class="testimonial-author">
-              <div class="author-avatar">C</div>
-              <div class="author-info">
-                <h4>Carlos Méndez</h4>
-                <span>Monterrey</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="historia" class="history">
-      <div class="container">
-        <h2 class="section-title historia-title">Nuestra historia</h2>
-        <div class="history-grid">
-          <div class="history-content">
+        <div class="history-story__grid">
+          <div class="history-story__copy">
             <p>A sus 19 años, Andrik Hashim Corzo comenzó a dar vida a su sueño en un pequeño taller, impulsado por una ambición genuina: no solo portar y lucir la joyería, sino dominar el arte de su creación desde la raíz. Lo que inició como una fascinación personal por el proceso artesanal se convirtió en una misión por llevar la identidad de México a cada rincón del mundo.</p>
             <p>Hoy, con la mirada puesta en el horizonte internacional, Andrik trabaja incansablemente para sus clientes, colaborando con artesanos locales y perfeccionando cada detalle. Su compromiso es claro: crear joyas únicas que trasciendan fronteras, llevando la esencia y el espíritu del Xoloitzcuintle a manos de personas en todo el mundo.</p>
-           
           </div>
-          <div class="history-visual">
-            <img src="assets/historia.png" alt="Nuestro taller" class="history-image" />
+          <div class="history-story__visuals" aria-label="Andrik Hashim y el stand de El Xolito Mex">
+            <figure class="history-story__frame history-story__frame--main">
+              <img src="assets/hashim%20(1).jpeg" alt="Andrik Hashim con el Xoloitzcuintle en el stand de El Xolito Mex" />
+            </figure>
+            <figure class="history-story__frame history-story__frame--side">
+              <img src="assets/hashim%20(2).jpeg" alt="Stand de joyería El Xolito Mex en feria artesanal" />
+            </figure>
           </div>
         </div>
       </div>
     </section>
 
     <!-- Nuestro taller -->
-    <section class="taller-collage">
-      <div class="taller-collage-grid">
-        <div class="taller-item item1"><img src="assets/Taller/taller1.jpeg" alt="Taller de joyería - espacio de trabajo artesanal"></div>
-        <div class="taller-item item2"><img src="assets/Taller/taller2.jpeg" alt="Taller de joyería - herramientas y materiales"></div>
-        <div class="taller-item item3"><img src="assets/Taller/taller3.jpeg" alt="Taller de joyería - proceso de creación"></div>
-      </div>
-      <div class="taller-content">
-        <h2 class="section-title taller-title">El Alma Hecha Joya: Nuestra Historia en el Taller</h2>
+    <section id="taller" class="atelier">
+      <div class="container">
+        <div class="atelier__top">
+          <h2 class="atelier__title">El taller</h2>
+          <p class="atelier__lead">Donde la idea se vuelve metal.</p>
+        </div>
 
-        <p class="p-taller">
-          En el alma de nuestra joyería reside un espacio de aprendizaje y maestría: nuestro taller, donde la visión de Andrik se materializa en metal. Este viaje no comenzó en los libros, sino en el encuentro afortunado con un maestro joyero que le abrió las puertas de su oficio. Cautivado por piezas auténticas que alguna vez fueron premiadas en certámenes, Andrik se sumergió en el estudio de la plata pura y la energía de gemas como el ópalo y los cuarzos, comprendiendo que cada piedra dicta su propio destino. Esta formación directa en el taller nos permite controlar cada etapa del proceso creativo y técnico. Al fusionar ese conocimiento heredado con su ambición de innovar, Andrik garantiza una calidad excepcional en cada pieza. El resultado es una joyería con alma, donde quien imagina el diseño es el mismo que conoce el secreto de forjar los metales y piedras para convertirlos en obras únicas y memorables.
-        </p>
+        <div class="atelier__board">
+          <div class="atelier__gallery" aria-label="Imágenes del taller">
+            <figure class="atelier__shot atelier__shot--wide">
+              <img src="assets/Taller/taller1.jpeg" alt="Espacio de trabajo artesanal" />
+            </figure>
+            <figure class="atelier__shot">
+              <img src="assets/Taller/taller2.jpeg" alt="Herramientas y materiales del taller" />
+            </figure>
+            <figure class="atelier__shot">
+              <img src="assets/Taller/taller3.jpeg" alt="Proceso de creación de joyería" />
+            </figure>
+          </div>
+
+          <div class="atelier__copy">
+            <p class="atelier__kicker">Alma hecha joya</p>
+            <p class="atelier__text">En el alma de nuestra joyería reside un espacio de aprendizaje y maestría: nuestro taller, donde la visión de Andrik se materializa en metal. Este viaje no comenzó en los libros, sino en el encuentro con un maestro joyero que le abrió las puertas de su oficio.</p>
+            <p class="atelier__text">Cautivado por piezas auténticas, Andrik se sumergió en la plata pura y en gemas como el ópalo y los cuarzos. Al fusionar ese conocimiento heredado con su ambición de innovar, garantiza una calidad excepcional en cada pieza.</p>
+            <p class="atelier__text atelier__text--emphasis">El resultado es una joyería con alma: quien imagina el diseño es el mismo que conoce el secreto de forjarlo.</p>
+          </div>
+        </div>
       </div>
     </section>
 
-    <section id="nosotros" class="about">
-      <div class="container about-grid">
-        <div>
-          <h2 class="section-title esencia-title">Nuestra esencia</h2>
-          <p>En El Xolito Mex creemos en el poder de lo simple con significado. Diseñamos piezas atemporales que
-            celebran la herencia mexicana con un lenguaje minimalista.</p>
-          <p>Materiales responsables, manufactura local y un compromiso con lo bien hecho.</p>
+    <section id="nosotros" class="essence">
+      <div class="container">
+        <div class="essence__top">
+          <h2 class="essence__title">Nuestra esencia</h2>
+          <p class="essence__lead">Lo simple, con significado.</p>
         </div>
-        <div class="about-card">
-          <div class="about-card-inner">
-            <h3>Garantía</h3>
-            <p>Envíos a todo México. Cambios y reparaciones sencillas.</p>
+
+        <div class="essence__board">
+          <div class="essence__statement">
+            <p class="essence__quote">Diseñamos piezas atemporales que celebran la herencia mexicana con un lenguaje minimalista.</p>
+            <p class="essence__support">Materiales responsables, manufactura local y un compromiso con lo bien hecho.</p>
+          </div>
+
+          <div class="essence__pillars">
+            <article class="essence__pillar">
+              <span class="essence__num" aria-hidden="true">01</span>
+              <h3 class="essence__pillar-title">Minimalismo</h3>
+              <p class="essence__pillar-text">Formas limpias. Detalles que hablan sin gritar.</p>
+            </article>
+            <article class="essence__pillar">
+              <span class="essence__num" aria-hidden="true">02</span>
+              <h3 class="essence__pillar-title">Origen</h3>
+              <p class="essence__pillar-text">Hecho en México, con alma artesanal.</p>
+            </article>
+            <article class="essence__pillar">
+              <span class="essence__num" aria-hidden="true">03</span>
+              <h3 class="essence__pillar-title">Garantía</h3>
+              <p class="essence__pillar-text">Envíos a todo México. Cambios y reparaciones sencillas.</p>
+            </article>
           </div>
         </div>
       </div>
@@ -531,187 +520,6 @@
   <script src="services/productService.js"></script>
   <script type="module" src="main.js"></script>
   <script>
-    console.log('🔍 Script inline ejecutado');
-    
-    // Función de inicialización del carrusel (fallback si main.js no carga)
-    function initCarouselFallback() {
-      const carousel = document.querySelector('.piezas-des-carousel');
-      const slidesContainer = document.querySelector('#featuredCarousel');
-      const slides = document.querySelectorAll('.piezas-des-slide');
-      const dotsContainer = document.querySelector('.piezas-des-dots');
-      
-      if (!carousel || !slidesContainer || !slides.length || !dotsContainer) {
-        console.error('❌ Elementos del carrusel no encontrados');
-        return;
-      }
-      
-      const totalSlides = slides.length;
-      let currentSlide = 0;
-      let autoSlideInterval;
-      
-      // Crear puntos de navegación
-      dotsContainer.innerHTML = '';
-      for (let i = 0; i < totalSlides; i++) {
-        const dot = document.createElement('div');
-        dot.classList.add('piezas-des-dot');
-        if (i === 0) dot.classList.add('active');
-        dot.addEventListener('click', () => goToSlide(i));
-        dotsContainer.appendChild(dot);
-      }
-      
-      const dots = document.querySelectorAll('.piezas-des-dot');
-      
-      function goToSlide(slideIndex) {
-        currentSlide = slideIndex;
-        updateCarousel();
-        resetAutoSlide();
-      }
-      
-      function updateCarousel() {
-        slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-        dots.forEach((dot, index) => {
-          dot.classList.toggle('active', index === currentSlide);
-        });
-      }
-      
-      function nextSlide() {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        updateCarousel();
-      }
-      
-      function startAutoSlide() {
-        if (autoSlideInterval) clearInterval(autoSlideInterval);
-        autoSlideInterval = setInterval(nextSlide, 4000);
-      }
-      
-      function stopAutoSlide() {
-        if (autoSlideInterval) {
-          clearInterval(autoSlideInterval);
-          autoSlideInterval = null;
-        }
-      }
-      
-      function resetAutoSlide() {
-        stopAutoSlide();
-        startAutoSlide();
-      }
-      
-      carousel.addEventListener('mouseenter', stopAutoSlide);
-      carousel.addEventListener('mouseleave', startAutoSlide);
-      
-      updateCarousel();
-      startAutoSlide();
-      
-      console.log('✅ Carrusel inicializado (fallback) con', totalSlides, 'slides');
-    }
-    
-    // Intentar usar la función de main.js, si no existe usar fallback
-    setTimeout(function() {
-      console.log('🔍 Timeout ejecutado, verificando función...');
-      console.log('🔍 Tipo de setupPiezasDestacadasCarousel:', typeof window.setupPiezasDestacadasCarousel);
-      if (typeof window.setupPiezasDestacadasCarousel === 'function') {
-        console.log('🔄 Usando función de main.js...');
-        window.setupPiezasDestacadasCarousel();
-      } else {
-        console.log('🔄 main.js no cargado, usando fallback...');
-        initCarouselFallback();
-      }
-    }, 1500);
-    
-    // Carrusel automático de ofertas en móvil
-    let offersAnimationId = null;
-    
-    function initOffersCarousel() {
-      const offersGrid = document.querySelector('.offers-grid');
-      if (!offersGrid) return;
-      
-      // Limpiar animación anterior
-      if (offersAnimationId) {
-        cancelAnimationFrame(offersAnimationId);
-        offersAnimationId = null;
-      }
-      offersGrid.style.transform = '';
-      
-      // Solo aplicar en móvil
-      if (window.innerWidth > 720) {
-        // Limpiar clones si existen
-        const clones = offersGrid.querySelectorAll('.offer-card-clone');
-        clones.forEach(clone => clone.remove());
-        return;
-      }
-      
-      const cards = offersGrid.querySelectorAll('.offer-card:not(.offer-card-clone)');
-      if (cards.length === 0) return;
-      
-      // Limpiar clones existentes
-      const existingClones = offersGrid.querySelectorAll('.offer-card-clone');
-      existingClones.forEach(clone => clone.remove());
-      
-      // Duplicar las tarjetas para scroll infinito
-      cards.forEach(card => {
-        const clone = card.cloneNode(true);
-        clone.classList.add('offer-card-clone');
-        offersGrid.appendChild(clone);
-      });
-      
-      // Calcular dimensiones
-      const cardWidth = cards[0].offsetWidth;
-      const gap = parseFloat(getComputedStyle(offersGrid).gap) || 16;
-      const scrollWidth = cardWidth + gap;
-      const totalWidth = scrollWidth * cards.length;
-      
-      // Hacer scroll automático
-      let scrollPosition = 0;
-      const scrollSpeed = 0.3;
-      let isPaused = false;
-      
-      function autoScroll() {
-        if (isPaused) {
-          offersAnimationId = requestAnimationFrame(autoScroll);
-          return;
-        }
-        
-        scrollPosition += scrollSpeed;
-        
-        if (scrollPosition >= totalWidth) {
-          scrollPosition = 0;
-        }
-        
-        offersGrid.style.transform = `translateX(-${scrollPosition}px)`;
-        offersAnimationId = requestAnimationFrame(autoScroll);
-      }
-      
-      // Pausar al hacer hover (solo en dispositivos con hover)
-      if (window.matchMedia('(hover: hover)').matches) {
-        offersGrid.addEventListener('mouseenter', () => {
-          isPaused = true;
-        }, { once: false });
-        
-        offersGrid.addEventListener('mouseleave', () => {
-          isPaused = false;
-        }, { once: false });
-      }
-      
-      // Iniciar animación
-      autoScroll();
-    }
-    
-    // Inicializar cuando el DOM esté listo
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', () => {
-        setTimeout(initOffersCarousel, 100);
-      });
-    } else {
-      setTimeout(initOffersCarousel, 100);
-    }
-    
-    // Reinicializar si cambia el tamaño de la ventana
-    let resizeTimer;
-    window.addEventListener('resize', () => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(initOffersCarousel, 250);
-    });
-    
     // Carrusel automático de reels en móvil
     let reelsAnimationId = null;
     

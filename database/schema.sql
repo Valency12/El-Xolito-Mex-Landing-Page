@@ -26,13 +26,17 @@ CREATE TABLE IF NOT EXISTS productos (
     nombre          TEXT    NOT NULL,
     descripcion     TEXT,
     precio          REAL    NOT NULL CHECK (precio >= 0),
+    precio_anterior REAL    CHECK (precio_anterior IS NULL OR precio_anterior >= 0),
     imagen_path     TEXT,
+    imagen_blanca   TEXT,
     material        TEXT,
     stock           INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
     categoria       TEXT,
     activo          INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
     destacado       INTEGER NOT NULL DEFAULT 0 CHECK (destacado IN (0, 1)),
-    created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
+    orden           INTEGER NOT NULL DEFAULT 0,
+    created_at      TEXT    DEFAULT (datetime('now', 'localtime')),
+    updated_at      TEXT    DEFAULT (datetime('now', 'localtime'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_productos_categoria ON productos(categoria);
@@ -41,13 +45,14 @@ CREATE INDEX IF NOT EXISTS idx_productos_nombre ON productos(nombre);
 CREATE INDEX IF NOT EXISTS idx_productos_activo ON productos(activo);
 CREATE INDEX IF NOT EXISTS idx_productos_destacado ON productos(destacado);
 
--- Tabla: usuarios (clientes que se registran en la tienda)
+-- Tabla: usuarios (clientes y administradores)
 CREATE TABLE IF NOT EXISTS usuarios (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     email           TEXT    NOT NULL UNIQUE,
     password_hash   TEXT    NOT NULL,
     nombre_completo TEXT,
     telefono        TEXT,
+    rol             TEXT    NOT NULL DEFAULT 'cliente' CHECK (rol IN ('cliente', 'admin')),
     created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
 );
 
@@ -94,6 +99,27 @@ CREATE TABLE IF NOT EXISTS pedido_items (
 );
 
 CREATE INDEX IF NOT EXISTS idx_pedido_items_pedido ON pedido_items(pedido_id);
+
+-- Tabla: banners y contenido editorial (ofertas, hero, portadas)
+CREATE TABLE IF NOT EXISTS banners (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    tipo            TEXT    NOT NULL DEFAULT 'oferta' CHECK (tipo IN ('oferta', 'hero', 'portada')),
+    titulo          TEXT,
+    subtitulo       TEXT,
+    imagen_desktop  TEXT    NOT NULL,
+    imagen_mobile   TEXT,
+    enlace          TEXT,
+    texto_boton     TEXT,
+    activo          INTEGER NOT NULL DEFAULT 1 CHECK (activo IN (0, 1)),
+    orden           INTEGER NOT NULL DEFAULT 0,
+    fecha_inicio    TEXT,
+    fecha_fin       TEXT,
+    created_at      TEXT    DEFAULT (datetime('now', 'localtime')),
+    updated_at      TEXT    DEFAULT (datetime('now', 'localtime'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_banners_tipo ON banners(tipo);
+CREATE INDEX IF NOT EXISTS idx_banners_activo ON banners(activo);
 
 -- ============================================================
 -- INSERT de ejemplo - Productos (categorías: ver lista arriba)

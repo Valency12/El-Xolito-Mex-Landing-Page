@@ -27,7 +27,8 @@ function sanitizeUser(row) {
     id: row.id,
     email: row.email,
     nombre_completo: row.nombre_completo || '',
-    telefono: row.telefono || ''
+    telefono: row.telefono || '',
+    rol: row.rol || 'cliente'
   };
 }
 
@@ -81,7 +82,7 @@ router.post('/register', (req, res) => {
       )
       .run(emailNorm, password_hash, nombreTrim, (telefono || '').trim() || null);
     const user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(result.lastInsertRowid);
-    const payload = { userId: user.id, email: user.email };
+    const payload = { userId: user.id, email: user.email, rol: user.rol || 'cliente' };
     const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
     const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, REFRESH_SECRET, {
       expiresIn: REFRESH_EXPIRY
@@ -121,7 +122,7 @@ router.post('/login', (req, res) => {
         message: 'Correo o contraseña incorrectos'
       });
     }
-    const payload = { userId: user.id, email: user.email };
+    const payload = { userId: user.id, email: user.email, rol: user.rol || 'cliente' };
     const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
     const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, REFRESH_SECRET, {
       expiresIn: REFRESH_EXPIRY
@@ -179,7 +180,12 @@ router.post('/refresh', (req, res) => {
     if (payload.type !== 'refresh') {
       return res.status(401).json({ success: false, message: 'Token inválido' });
     }
-    const newPayload = { userId: payload.userId, email: payload.email };
+    const user = db.prepare('SELECT rol FROM usuarios WHERE id = ?').get(payload.userId);
+    const newPayload = {
+      userId: payload.userId,
+      email: payload.email,
+      rol: user?.rol || payload.rol || 'cliente'
+    };
     const accessToken = jwt.sign(newPayload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
     return res.json({
       success: true,

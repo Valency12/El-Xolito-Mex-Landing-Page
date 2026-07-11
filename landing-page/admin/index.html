@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — El Xolito Mex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css" />
+</head>
+<body>
+
+  <!-- Login -->
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <img src="../assets/Logos/logo3.jpeg" alt="El Xolito Mex" class="login-logo" />
+      <h1 class="login-title">Panel administrativo</h1>
+      <p class="login-sub">Gestiona productos, ofertas y contenido del sitio</p>
+      <form id="loginForm" class="login-form">
+        <label>
+          <span>Correo</span>
+          <input type="email" id="loginEmail" required autocomplete="username" placeholder="admin@elxolitomex.com" />
+        </label>
+        <label>
+          <span>Contraseña</span>
+          <input type="password" id="loginPassword" required autocomplete="current-password" placeholder="••••••••" />
+        </label>
+        <p id="loginError" class="form-error" hidden></p>
+        <button type="submit" class="btn btn-primary btn-block">Iniciar sesión</button>
+      </form>
+      <a href="../index.html" class="login-back">← Volver al sitio</a>
+    </div>
+  </div>
+
+  <!-- App -->
+  <div id="adminApp" class="admin-app" hidden>
+    <aside class="admin-sidebar">
+      <div class="sidebar-brand">
+        <img src="../assets/Logos/logo3.jpeg" alt="" class="sidebar-logo" />
+        <span>El Xolito Mex</span>
+      </div>
+      <nav class="sidebar-nav">
+        <button type="button" class="nav-item is-active" data-view="products">
+          <span class="nav-icon">◇</span> Productos
+        </button>
+        <button type="button" class="nav-item" data-view="banners-oferta">
+          <span class="nav-icon">▬</span> Banners / Ofertas
+        </button>
+        <button type="button" class="nav-item" data-view="banners-hero">
+          <span class="nav-icon">◻</span> Hero / Portada
+        </button>
+        <button type="button" class="nav-item" data-view="orders">
+          <span class="nav-icon">☰</span> Pedidos
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <p class="sidebar-user" id="sidebarUser"></p>
+        <button type="button" class="btn btn-ghost btn-sm" id="logoutBtn">Cerrar sesión</button>
+        <a href="../index.html" class="sidebar-link">Ver sitio →</a>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-topbar">
+        <h2 class="topbar-title" id="viewTitle">Productos</h2>
+        <div class="topbar-actions" id="topbarActions"></div>
+      </header>
+
+      <!-- Vista: Productos -->
+      <section id="view-products" class="admin-view">
+        <div class="toolbar">
+          <input type="search" id="productSearch" class="input-search" placeholder="Buscar por nombre, material..." />
+          <select id="productCategoryFilter" class="input-select">
+            <option value="">Todas las categorías</option>
+          </select>
+          <select id="productStatusFilter" class="input-select">
+            <option value="">Todos los estados</option>
+            <option value="1">Activos</option>
+            <option value="0">Inactivos</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="productsTable">
+            <thead>
+              <tr>
+                <th>Imagen</th>
+                <th>Nombre</th>
+                <th>Categoría</th>
+                <th>Precio</th>
+                <th>Stock</th>
+                <th>Estado</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr><td colspan="7" class="table-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Vista: Banners oferta -->
+      <section id="view-banners-oferta" class="admin-view" hidden>
+        <p class="view-hint">Ofertas de la landing (hasta 3). Completa etiqueta (−20%), precios e imagen. El primero en orden es la oferta grande.</p>
+        <div class="cards-grid" id="bannersOfertaGrid"></div>
+      </section>
+
+      <!-- Vista: Hero -->
+      <section id="view-banners-hero" class="admin-view" hidden>
+        <p class="view-hint">Hero de la landing. El primero activo (por orden) define fondo, título, subtítulo y botón. Usa imagen desktop (fondo) e imagen móvil opcional (fondo en celular / detalle).</p>
+        <div class="cards-grid" id="bannersHeroGrid"></div>
+      </section>
+
+      <!-- Vista: Pedidos -->
+      <section id="view-orders" class="admin-view" hidden>
+        <div class="toolbar">
+          <input type="search" id="orderSearch" class="input-search" placeholder="Buscar por #, email o nombre..." />
+          <select id="orderStatusFilter" class="input-select">
+            <option value="">Todos los estados</option>
+            <option value="pendiente_pago">Pendiente de pago</option>
+            <option value="pagado">Pagado</option>
+            <option value="preparando">Preparando</option>
+            <option value="enviado">Enviado</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table" id="ordersTable">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Cliente</th>
+                <th>Total</th>
+                <th>Estado</th>
+                <th>Ítems</th>
+                <th>Fecha</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <tr><td colspan="7" class="table-empty">Cargando...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modal -->
+  <div id="modalOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true">
+      <header class="modal-header">
+        <h3 id="modalTitle">Editar</h3>
+        <button type="button" class="modal-close" id="modalClose" aria-label="Cerrar">×</button>
+      </header>
+      <div class="modal-body" id="modalBody"></div>
+      <footer class="modal-footer" id="modalFooter"></footer>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast" hidden></div>
+
+  <script src="../config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

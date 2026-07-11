@@ -197,6 +197,8 @@ function formatProductForFrontend(apiProduct) {
     color: apiProduct.color,
     featured: apiProduct.destacado,
     image: getMainImage(apiProduct),
+    image_flip: apiProduct.imagen_blanca || apiProduct.image_flip || null,
+    imagen_blanca: apiProduct.imagen_blanca || null,
     imagenes: apiProduct.imagenes || [],
     stock: apiProduct.stock,
     descripcion_corta: apiProduct.descripcion_corta,

@@ -28,32 +28,36 @@ function getElXolitoApiBaseForMain() {
  */
 const FEATURED_SHOWCASE_SLIDES = [
 	{
-		image: 'assets/Pulseras/brazalete_con_turquesa.png',
-		name: 'Brazalete con turquesa',
-		materials: 'Plata .925 · Turquesa natural · Artesanía mexicana',
-		price: 2480,
-		productId: 11
+		image: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
+		name: 'Pulsera Placa Ovalada',
+		materials: 'Plata .925',
+		category: 'Pulseras',
+		price: 450,
+		productId: 1
 	},
 	{
-		image: 'assets/Anillos/anillo sello.png',
-		name: 'Anillo sello contemporáneo',
-		materials: 'Plata .925 · Acabado satinado · Diseño minimalista',
-		price: 1890,
-		productId: 8
+		image: 'assets/Dijes/ChatGPT Image 25 may 2026, 11_58_26 p.m..png',
+		name: 'Dije Crucifijo Clásico',
+		materials: 'Plata .925',
+		category: 'Dijes',
+		price: 410,
+		productId: 2
 	},
 	{
-		image: 'assets/Anillos/anillo_piedra.png',
-		name: 'Anillo con piedra natural',
-		materials: 'Plata .925 · Piedra facetada · Ideal para diario',
-		price: 2150,
-		productId: 8
+		image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+		name: 'Anillo Centauro',
+		materials: 'Plata .925',
+		category: 'Anillos',
+		price: 720,
+		productId: 3
 	},
 	{
-		image: 'assets/Conjuntos/conjunto_conchas.png',
-		name: 'Conjunto inspiración marina',
-		materials: 'Plata .925 · Motivos de concha · Edición especial',
-		price: 3290,
-		productId: 7
+		image: 'assets/Dijes/ChatGPT Image 10 jul 2026, 03_09_33 p.m..png',
+		name: 'Dije Virgen Circular',
+		materials: 'Plata .925',
+		category: 'Dijes',
+		price: 570,
+		productId: 4
 	}
 ];
 
@@ -439,7 +443,7 @@ async function loadProductsSimple() {
         if (window.productService && window.productService.formatProductForFrontend) {
           PRODUCTS = products.map(p => window.productService.formatProductForFrontend(p));
         } else {
-          PRODUCTS = products.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: (p.imagenes && p.imagenes[0]) ? p.imagenes[0].ruta : null, category: p.categoria_slug, imagenes: p.imagenes || [], color: p.color }));
+          PRODUCTS = products.map(p => ({ id: p.id, name: p.nombre, price: p.precio, material: p.material, image: (p.imagenes && p.imagenes[0]) ? p.imagenes[0].ruta : (p.imagen_path || null), image_flip: p.imagen_blanca || null, category: p.categoria_slug, imagenes: p.imagenes || [], color: p.color }));
         }
         return PRODUCTS;
       }
@@ -482,11 +486,22 @@ async function loadProductsSimple() {
 
 function getProductImageUrl(product) {
   if (product.image) return product.image;
+  if (product.imagen_path) return product.imagen_path;
   if (product.imagenes && product.imagenes.length > 0) {
-    const main = product.imagenes.find(img => img.es_principal) || product.imagenes[0];
+    const main = product.imagenes.find(img => img.es_principal || img.tipo === 'negro') || product.imagenes[0];
     if (main && main.ruta) return main.ruta;
   }
   return PLACEHOLDER_IMAGE;
+}
+
+function getProductFlipImageUrl(product) {
+  if (product.image_flip) return product.image_flip;
+  if (product.imagen_blanca) return product.imagen_blanca;
+  if (product.imagenes && product.imagenes.length > 0) {
+    const white = product.imagenes.find((img) => img.tipo === 'blanco' || (!img.es_principal && img.ruta));
+    if (white && white.ruta && white.ruta !== getProductImageUrl(product)) return white.ruta;
+  }
+  return null;
 }
 
 function getProductFallbackImage(product) {
@@ -529,19 +544,36 @@ function renderProductsSimple(products) {
   products.forEach(product => {
     const imageUrl = getProductImageUrl(product);
     const fallbackUrl = getProductFallbackImage(product);
+    const flipUrl = getProductFlipImageUrl(product);
     const nombre = productName(product);
     const precio = productPrice(product);
     const material = product.material || 'Material no especificado';
+    const canFlip = Boolean(flipUrl);
 
     const card = document.createElement('article');
-    card.className = 'tienda-product-card';
+    card.className = 'tienda-product-card' + (canFlip ? ' tienda-product-card--flip' : '');
+
+    const mediaHtml = canFlip
+      ? `<div class="tienda-product-card__flip">
+          <div class="tienda-product-card__flip-inner">
+            <div class="tienda-product-card__face tienda-product-card__face--front">
+              <img src="${imageUrl}" alt="${escapeHtml(nombre)}" data-fallback="${fallbackUrl}">
+            </div>
+            <div class="tienda-product-card__face tienda-product-card__face--back">
+              <img src="${flipUrl}" alt="${escapeHtml(nombre)} — vista clara" data-fallback="${fallbackUrl}">
+            </div>
+          </div>
+          <span class="tienda-product-card__flip-hint">Girar</span>
+        </div>`
+      : `<div class="tienda-product-card__image">
+          <img src="${imageUrl}" alt="${escapeHtml(nombre)}" data-fallback="${fallbackUrl}">
+        </div>`;
+
     card.innerHTML = `
-      <div class="tienda-product-card__image">
-        <img src="${imageUrl}" alt="${nombre}" data-fallback="${fallbackUrl}">
-      </div>
+      ${mediaHtml}
       <div class="tienda-product-card__body">
-        <h3 class="tienda-product-card__title">${nombre}</h3>
-        <p class="tienda-product-card__meta">${material}</p>
+        <h3 class="tienda-product-card__title">${escapeHtml(nombre)}</h3>
+        <p class="tienda-product-card__meta">${escapeHtml(material)}</p>
         <div class="tienda-product-card__footer">
           <span class="tienda-product-card__price">${formatCurrency(precio)}</span>
           <button type="button" class="tienda-product-card__btn btn-add-cart-simple" data-product-id="${product.id}">Agregar</button>
@@ -549,18 +581,25 @@ function renderProductsSimple(products) {
       </div>
     `;
 
-    const img = card.querySelector('.tienda-product-card__image img');
-    if (img) {
+    card.querySelectorAll('img').forEach((img) => {
       img.addEventListener('error', function onImgError() {
         img.removeEventListener('error', onImgError);
         const fallback = img.dataset.fallback || PLACEHOLDER_IMAGE;
         img.src = fallback;
       });
-    }
+    });
 
     card.addEventListener('click', (e) => {
       if (e.target.classList.contains('btn-add-cart-simple') || e.target.closest('.btn-add-cart-simple')) {
         return;
+      }
+      // En móvil: primer toque gira la card si tiene flip
+      if (canFlip && window.matchMedia('(hover: none)').matches) {
+        if (!card.classList.contains('is-flipped')) {
+          e.preventDefault();
+          card.classList.add('is-flipped');
+          return;
+        }
       }
       window.location.href = `producto?id=${product.id}`;
     });
@@ -580,6 +619,75 @@ function renderProductsSimple(products) {
 
     grid.appendChild(card);
   });
+}
+
+const EXPLORE_CATEGORY_META = {
+  anillos: { nombre: 'Anillos', image: 'assets/Categorias/anillo.png' },
+  brazaletes: { nombre: 'Brazaletes', image: 'assets/Categorias/brazaletes.png' },
+  collares: { nombre: 'Collares', image: 'assets/Categorias/collar.png' },
+  aretes: { nombre: 'Aretes', image: 'assets/Categorias/aretes.png' },
+  broqueles: { nombre: 'Broqueles', image: 'assets/Categorias/broqueles.png' },
+  pulseras: { nombre: 'Pulseras', image: 'assets/Categorias/pulseras.png' },
+  dijes: { nombre: 'Dijes', image: 'assets/Categorias/dije.png' },
+  conjuntos: { nombre: 'Conjuntos', image: 'assets/Categorias/conjunto.png' }
+};
+
+function hideSeguirExplorando() {
+  const section = document.getElementById('seguirExplorando');
+  if (section) section.hidden = true;
+}
+
+/** Seguir explorando en ficha de producto: otras piezas (misma categoría primero) */
+async function renderSeguirExplorandoForProduct(currentProduct) {
+  const section = document.getElementById('seguirExplorando');
+  const grid = document.getElementById('seguirExplorandoGrid');
+  if (!section || !grid || !currentProduct) return;
+
+  try {
+    if (!PRODUCTS.length) await loadProductsSimple();
+  } catch (_) { /* ignore */ }
+
+  const currentId = currentProduct.id;
+  const currentCat = String(currentProduct.category || currentProduct.categoria_slug || '').toLowerCase();
+
+  let others = PRODUCTS.filter((p) => {
+    if (p.id == currentId || String(p.id) === String(currentId)) return false;
+    return getProductImageUrl(p) !== PLACEHOLDER_IMAGE;
+  });
+
+  const sameCat = others.filter((p) => String(p.category || p.categoria_slug || '').toLowerCase() === currentCat);
+  const rest = others.filter((p) => String(p.category || p.categoria_slug || '').toLowerCase() !== currentCat);
+  others = sameCat.concat(rest).slice(0, 4);
+
+  if (!others.length) {
+    section.hidden = true;
+    return;
+  }
+
+  grid.innerHTML = others.map((p) => {
+    const name = p.name || p.nombre || 'Pieza';
+    const cat = (p.category || p.categoria_slug || '').toLowerCase();
+    const catLabel = (EXPLORE_CATEGORY_META[cat] && EXPLORE_CATEGORY_META[cat].nombre) || cat;
+    return `
+      <a class="seguir-explorando__card" href="producto?id=${p.id}">
+        <div class="seguir-explorando__card-img">
+          <img src="${encodeURI(getProductImageUrl(p))}" alt="${escapeHtml(name)}" loading="lazy" data-fallback="${PLACEHOLDER_IMAGE}">
+        </div>
+        <div class="seguir-explorando__card-body">
+          <p class="seguir-explorando__card-label">${escapeHtml(catLabel)}</p>
+          <h3 class="seguir-explorando__card-name">${escapeHtml(name)}</h3>
+        </div>
+      </a>`;
+  }).join('');
+
+  grid.querySelectorAll('img[data-fallback]').forEach((img) => {
+    img.addEventListener('error', function onErr() {
+      img.removeEventListener('error', onErr);
+      img.src = img.dataset.fallback || PLACEHOLDER_IMAGE;
+    });
+  });
+
+  section.hidden = false;
 }
 
 function showProductModal(product) {
@@ -608,54 +716,86 @@ if (productCloseBtn) {
   };
 }
 
-function renderFeaturedCarousel() {
-  const container = document.getElementById('featuredCarousel');
+function renderFeaturedCarousel(slides) {
+  const container = document.getElementById('featuredGrid');
   if (!container) return;
 
+  const list = (slides && slides.length) ? slides : FEATURED_SHOWCASE_SLIDES;
   container.innerHTML = '';
-  const frag = document.createDocumentFragment();
 
-  for (const s of FEATURED_SHOWCASE_SLIDES) {
+  list.slice(0, 4).forEach((s, index) => {
     const name = s.name || 'Pieza destacada';
     const materials = s.materials || 'Plata .925';
-    const price = typeof s.price === 'number' ? s.price : 0;
     const href = s.href || `producto?id=${encodeURIComponent(s.productId)}`;
     const imageUrl = encodeURI(s.image);
-    const safeName = escapeHtml(name);
-    const safeMaterials = escapeHtml(materials);
+    const num = String(index + 1).padStart(2, '0');
 
-    const slide = document.createElement('div');
-    slide.className = 'piezas-des-slide';
-    slide.innerHTML = `
-      <div class="piezas-des-image-container">
-        <img src="${imageUrl}" alt="${safeName}" loading="lazy" data-fallback="${PLACEHOLDER_IMAGE}">
+    const card = document.createElement('a');
+    card.className = 'featured-pick';
+    card.href = href;
+    card.innerHTML = `
+      <div class="featured-pick__media">
+        <span class="featured-pick__index" aria-hidden="true">${num}</span>
+        <img src="${imageUrl}" alt="${escapeHtml(name)}" loading="lazy" data-fallback="${PLACEHOLDER_IMAGE}">
       </div>
-      <div class="piezas-des-info">
-        <h3 class="piezas-des-name">${safeName}</h3>
-        <p class="piezas-des-materials">${safeMaterials}</p>
-        <p class="piezas-des-price">${formatCurrency(price)}</p>
-        <button type="button" class="btn piezas-des-button" data-href="${escapeHtml(href)}">Ver en la tienda</button>
+      <div class="featured-pick__info">
+        <h3 class="featured-pick__name">${escapeHtml(name)}</h3>
+        <p class="featured-pick__meta">${escapeHtml(materials)}</p>
       </div>
     `;
 
-    const img = slide.querySelector('img');
+    const img = card.querySelector('img');
     if (img) {
       img.addEventListener('error', function onImgError() {
         img.removeEventListener('error', onImgError);
         img.src = img.dataset.fallback || PLACEHOLDER_IMAGE;
       });
     }
-    const btn = slide.querySelector('.piezas-des-button');
-    if (btn && btn.dataset.href) {
-      btn.addEventListener('click', () => {
-        window.location.href = btn.dataset.href;
+    container.appendChild(card);
+  });
+}
+
+async function loadFeaturedFromAPI() {
+  try {
+    const serviceAvailable = await waitForProductService(20, 150);
+    if (!serviceAvailable || !window.productService) {
+      renderFeaturedCarousel(FEATURED_SHOWCASE_SLIDES);
+      return false;
+    }
+    const result = await window.productService.getAllProducts({ destacado: 1, activo: 1 });
+    let products = (result.success && result.products) ? result.products : [];
+
+    // Si hay pocos destacados, completar con activos que tengan imagen
+    if (products.length < 4) {
+      const all = await window.productService.getAllProducts({ activo: 1 });
+      const extras = (all.products || []).filter((p) => {
+        const img = p.imagen_path || p.image || (p.imagenes && p.imagenes[0] && p.imagenes[0].ruta);
+        return img && !products.some((x) => x.id === p.id);
       });
+      products = products.concat(extras).slice(0, 4);
     }
 
-    frag.appendChild(slide);
-  }
+    if (!products.length) {
+      renderFeaturedCarousel(FEATURED_SHOWCASE_SLIDES);
+      return false;
+    }
 
-  container.appendChild(frag);
+    const slides = products.slice(0, 4).map((p) => ({
+      image: p.imagen_path || p.image || (p.imagenes && p.imagenes[0] && p.imagenes[0].ruta),
+      name: p.nombre,
+      materials: p.material || 'Plata .925',
+      category: p.categoria_nombre || p.categoria_slug || '',
+      price: p.precio,
+      productId: p.id,
+      href: `producto?id=${p.id}`
+    }));
+    renderFeaturedCarousel(slides);
+    return true;
+  } catch (err) {
+    console.warn('Destacados desde API no disponibles, usando fallback:', err);
+    renderFeaturedCarousel(FEATURED_SHOWCASE_SLIDES);
+    return false;
+  }
 }
 
 // Función para cargar categorías desde la API y renderizarlas
@@ -756,6 +896,24 @@ function renderCategories(categories) {
 function setupCategories() {
 	const categoryCards = document.querySelectorAll('.category-card');
 	console.log(`🔧 Configurando ${categoryCards.length} tarjetas de categoría`);
+
+	const backLink = document.querySelector('.productos-back');
+	if (backLink && !backLink.dataset.bound) {
+		backLink.dataset.bound = '1';
+		backLink.addEventListener('click', (e) => {
+			e.preventDefault();
+			window.history.pushState({}, '', 'tienda');
+			const categoriesSection = document.querySelector('.categories');
+			const productosSection = document.getElementById('productos');
+			const shopHero = document.querySelector('.shop-hero:not(#categoryHero)');
+			const categoryHero = document.getElementById('categoryHero');
+			if (categoriesSection) categoriesSection.style.display = '';
+			if (productosSection) productosSection.style.display = 'none';
+			if (shopHero) shopHero.style.display = '';
+			if (categoryHero) categoryHero.remove();
+			hideSeguirExplorando();
+		});
+	}
 	
 	// Usar delegación de eventos en el contenedor para evitar problemas con listeners duplicados
 	const categoriesGrid = document.querySelector('.categories-grid');
@@ -807,6 +965,9 @@ function setupCategories() {
 				const productosSection = document.getElementById('productos');
 				if (categoriesSection) categoriesSection.style.display = 'block';
 				if (productosSection) productosSection.style.display = 'none';
+				const shopHero = document.querySelector('.shop-hero:not(#categoryHero)');
+				if (shopHero) shopHero.style.display = '';
+				hideSeguirExplorando();
 			}
 		});
 		window._popstateHandlerAdded = true;
@@ -928,6 +1089,7 @@ function setupFilters() {
 // Función para manejar la vista de categoría específica
 async function handleCategoryView(category) {
 	console.log(`🚀 Mostrando categoría "${category}" sin recargar página`);
+	window.__currentTiendaCategory = String(category || '').toLowerCase();
 	
 	// Ocultar la sección de categorías INMEDIATAMENTE (sin esperar)
 	const categoriesSection = document.querySelector('.categories');
@@ -1364,7 +1526,7 @@ function showAuthMessage(message, type = 'success') {
       right: 20px;
       padding: 12px 20px;
       border-radius: 8px;
-      font-family: "GFS Didot", serif;
+      font-family: "Montserrat", system-ui, sans-serif;
       font-weight: 500;
       z-index: 10000;
       transition: all 0.3s ease;
@@ -2019,6 +2181,7 @@ async function main() {
 			const productosSection = document.getElementById('productos');
 			if (productosSection) productosSection.style.display = 'none';
 		} else {
+			window.__currentTiendaCategory = String(activeCategoryParam).toLowerCase().trim();
 			// Filtrar por categoría
 			if (products.length > 0) {
 				const slugNorm = String(activeCategoryParam).toLowerCase().trim();
@@ -2077,17 +2240,295 @@ async function main() {
 		}
 	}
 
-	// Piezas destacadas: imágenes y textos desde FEATURED_SHOWCASE_SLIDES; luego animación
-	if (document.getElementById('featuredCarousel')) {
-		renderFeaturedCarousel();
+	// Piezas destacadas: 4 piezas desde API
+	if (document.getElementById('featuredGrid')) {
+		await loadFeaturedFromAPI();
 	}
-	const carouselElement = document.querySelector('.piezas-des-carousel');
-	if (carouselElement) {
-		setupPiezasDestacadasCarousel();
+
+	if (document.getElementById('dealsBoard')) {
+		await loadDealsFromAPI();
 	}
+
+	if (document.querySelector('[data-hero-root]')) {
+		await loadHeroFromAPI();
+	}
+
+	setupVoicesSection();
   
   // Setup product modal events
   setupProductModal();
+}
+
+function resolveSiteAsset(path) {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  return String(path).replace(/^\//, '');
+}
+
+function applyHeroBanner(banner) {
+  const root = document.querySelector('[data-hero-root]');
+  if (!root || !banner) return;
+
+  const desktop = resolveSiteAsset(banner.imagen_desktop);
+  const mobile = resolveSiteAsset(banner.imagen_mobile || banner.imagen_desktop);
+  if (desktop) {
+    root.style.setProperty('--hero-bg', `url("${encodeURI(desktop)}")`);
+  }
+  if (mobile) {
+    root.style.setProperty('--hero-bg-mobile', `url("${encodeURI(mobile)}")`);
+  }
+
+  const titleEl = root.querySelector('[data-hero-title]');
+  const leadEl = root.querySelector('[data-hero-lead]');
+  const ctaEl = root.querySelector('[data-hero-cta]');
+  const imageEl = root.querySelector('[data-hero-image]');
+
+  if (titleEl && banner.titulo) titleEl.textContent = banner.titulo;
+  if (leadEl && banner.subtitulo) leadEl.textContent = banner.subtitulo;
+
+  if (ctaEl) {
+    if (banner.enlace) ctaEl.setAttribute('href', banner.enlace);
+    if (banner.texto_boton) {
+      ctaEl.innerHTML = `<strong>${escapeHtml(banner.texto_boton)}</strong>`;
+    }
+  }
+
+  // Imagen lateral: móvil del banner, o la misma desktop si no hay móvil
+  const sideImg = resolveSiteAsset(banner.imagen_mobile || banner.imagen_desktop);
+  if (imageEl && sideImg && banner.imagen_mobile) {
+    imageEl.src = encodeURI(sideImg);
+    imageEl.alt = banner.titulo || 'El Xolito Mex';
+  }
+}
+
+async function loadHeroFromAPI() {
+  try {
+    const apiBase = getElXolitoApiBaseForMain();
+    const res = await fetch(`${apiBase}/content/banners?tipo=hero`);
+    const data = await res.json().catch(() => ({}));
+    const banners = (data.success && data.data && data.data.banners) ? data.data.banners : [];
+    if (banners.length) {
+      applyHeroBanner(banners[0]);
+      return true;
+    }
+  } catch (err) {
+    console.warn('Hero desde API no disponible, se mantiene el default:', err);
+  }
+  return false;
+}
+
+const DEALS_FALLBACK = [
+  {
+    titulo: 'Anillos de plata',
+    subtitulo: 'Descuento en la colección de anillos .925',
+    imagen_desktop: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+    enlace: 'tienda?categoria=anillos',
+    texto_boton: 'Ver oferta',
+    etiqueta: '−20%',
+    precio_anterior: 1100,
+    precio_nuevo: 880
+  },
+  {
+    titulo: 'Pulseras de plata',
+    subtitulo: 'Acabados únicos. Tiempo limitado.',
+    imagen_desktop: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
+    enlace: 'tienda?categoria=pulseras',
+    texto_boton: 'Ver oferta',
+    etiqueta: '−15%',
+    precio_anterior: 820,
+    precio_nuevo: 697
+  },
+  {
+    titulo: 'Colección completa',
+    subtitulo: 'Compra 3 piezas y obtén 25% de descuento.',
+    imagen_desktop: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
+    enlace: 'tienda',
+    texto_boton: 'Ver oferta',
+    etiqueta: '−25%',
+    precio_anterior: 3200,
+    precio_nuevo: 2400
+  }
+];
+
+function formatDealPrice(n) {
+  if (n == null || n === '') return '';
+  return formatCurrency(Number(n));
+}
+
+function renderDealsBoard(banners) {
+  const board = document.getElementById('dealsBoard');
+  const lead = document.getElementById('dealsLead');
+  if (!board) return;
+
+  const list = (banners && banners.length ? banners : DEALS_FALLBACK).slice(0, 3);
+  if (lead) {
+    lead.textContent = list.length === 1
+      ? 'Una oportunidad de la temporada.'
+      : `${list.length} oportunidades de la temporada.`;
+  }
+
+  const hero = list[0];
+  const rest = list.slice(1);
+  const heroHref = hero.enlace || 'tienda';
+  const heroCta = (hero.texto_boton || '').trim();
+  const heroPct = (hero.etiqueta || '').trim();
+  const heroTitle = (hero.titulo || '').trim();
+  const heroSub = (hero.subtitulo || '').trim();
+  const heroOld = formatDealPrice(hero.precio_anterior);
+  const heroNew = formatDealPrice(hero.precio_nuevo);
+  const heroHasCopy = !!(heroPct || heroTitle || heroSub || heroOld || heroNew);
+  const overlayClass = 'deals__hero-overlay' + (heroHasCopy ? '' : ' deals__hero-overlay--minimal');
+
+  let html = `
+    <a href="${escapeHtml(heroHref)}" class="deals__hero${rest.length ? '' : ' deals__hero--wide'}">
+      <img src="${encodeURI(hero.imagen_desktop || hero.imagen_mobile || PLACEHOLDER_IMAGE)}" alt="${escapeHtml(heroTitle || 'Oferta especial')}" class="deals__hero-img" data-fallback="${PLACEHOLDER_IMAGE}" />
+      <div class="${overlayClass}">
+        ${heroPct ? `<span class="deals__pct">${escapeHtml(heroPct)}</span>` : ''}
+        ${heroTitle ? `<h3 class="deals__name">${escapeHtml(heroTitle)}</h3>` : ''}
+        ${heroSub ? `<p class="deals__desc">${escapeHtml(heroSub)}</p>` : ''}
+        ${(heroOld || heroNew) ? `<div class="deals__prices">${heroOld ? `<span class="deals__old">${heroOld}</span>` : ''}${heroNew ? `<span class="deals__new">${heroNew}</span>` : ''}</div>` : ''}
+        ${heroCta ? `<span class="deals__cta">${escapeHtml(heroCta)}</span>` : ''}
+      </div>
+    </a>`;
+
+  if (rest.length) {
+    html += `<div class="deals__stack">`;
+    rest.forEach((item) => {
+      const href = item.enlace || 'tienda';
+      const pct = (item.etiqueta || '').trim();
+      const title = (item.titulo || '').trim();
+      const sub = (item.subtitulo || '').trim();
+      const oldP = formatDealPrice(item.precio_anterior);
+      const newP = formatDealPrice(item.precio_nuevo);
+      html += `
+        <a href="${escapeHtml(href)}" class="deals__row">
+          <div class="deals__row-media">
+            <img src="${encodeURI(item.imagen_desktop || item.imagen_mobile || PLACEHOLDER_IMAGE)}" alt="${escapeHtml(title || 'Oferta')}" data-fallback="${PLACEHOLDER_IMAGE}" />
+          </div>
+          <div class="deals__row-body">
+            ${pct ? `<span class="deals__pct deals__pct--sm">${escapeHtml(pct)}</span>` : ''}
+            ${title ? `<h3 class="deals__name deals__name--sm">${escapeHtml(title)}</h3>` : ''}
+            ${sub ? `<p class="deals__desc deals__desc--sm">${escapeHtml(sub)}</p>` : ''}
+            ${(oldP || newP) ? `<div class="deals__prices">${oldP ? `<span class="deals__old">${oldP}</span>` : ''}${newP ? `<span class="deals__new">${newP}</span>` : ''}</div>` : ''}
+          </div>
+        </a>`;
+    });
+    html += `</div>`;
+  }
+
+  board.innerHTML = html;
+  board.querySelectorAll('img[data-fallback]').forEach((img) => {
+    img.addEventListener('error', function onErr() {
+      img.removeEventListener('error', onErr);
+      img.src = img.dataset.fallback || PLACEHOLDER_IMAGE;
+    });
+  });
+}
+
+async function loadDealsFromAPI() {
+  try {
+    const apiBase = getElXolitoApiBaseForMain();
+    const res = await fetch(`${apiBase}/content/banners?tipo=oferta`);
+    const data = await res.json().catch(() => ({}));
+    const banners = (data.success && data.data && data.data.banners) ? data.data.banners : [];
+    if (banners.length) {
+      renderDealsBoard(banners);
+      return true;
+    }
+  } catch (err) {
+    console.warn('Ofertas desde API no disponibles, usando fallback:', err);
+  }
+  renderDealsBoard(DEALS_FALLBACK);
+  return false;
+}
+
+function setupVoicesSection() {
+  const root = document.querySelector('.voices');
+  if (!root || root.dataset.voicesInit === '1') return;
+
+  const entries = [
+    {
+      text: '“Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante.”',
+      name: 'María González',
+      place: 'Ciudad de México',
+      image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+      alt: 'Anillo de plata'
+    },
+    {
+      text: '“Mi pulsera artesanal es mi pieza favorita. El diseño minimalista combina con todo y la plata se mantiene brillante.”',
+      name: 'Ana Rodríguez',
+      place: 'Guadalajara',
+      image: 'assets/Pulseras/ChatGPT Image 25 may 2026, 11_19_10 p.m..png',
+      alt: 'Pulsera de plata'
+    },
+    {
+      text: '“El conjunto de aretes y anillo se siente hecho a mano. La calidad justifica la inversión y el servicio fue excelente.”',
+      name: 'Carlos Méndez',
+      place: 'Monterrey',
+      image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
+      alt: 'Pieza de plata'
+    }
+  ];
+
+  const stage = root.querySelector('[data-voices-stage]');
+  const textEl = root.querySelector('[data-voices-text]');
+  const nameEl = root.querySelector('[data-voices-name]');
+  const placeEl = root.querySelector('[data-voices-place]');
+  const imageEl = root.querySelector('[data-voices-image]');
+  const tabs = Array.from(root.querySelectorAll('[data-voices-tab]'));
+  if (!stage || !textEl || !nameEl || !placeEl || !imageEl || !tabs.length) return;
+
+  root.dataset.voicesInit = '1';
+  let current = 0;
+  let timer = null;
+
+  function show(index) {
+    const entry = entries[index];
+    if (!entry) return;
+    current = index;
+    stage.classList.add('is-switching');
+    window.setTimeout(() => {
+      textEl.textContent = entry.text;
+      nameEl.textContent = entry.name;
+      placeEl.textContent = entry.place;
+      imageEl.src = encodeURI(entry.image);
+      imageEl.alt = entry.alt;
+      tabs.forEach((tab, i) => {
+        const active = i === index;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+      stage.classList.remove('is-switching');
+    }, 180);
+  }
+
+  function startAuto() {
+    stopAuto();
+    timer = window.setInterval(() => {
+      show((current + 1) % entries.length);
+    }, 6000);
+  }
+
+  function stopAuto() {
+    if (timer) {
+      clearInterval(timer);
+      timer = null;
+    }
+  }
+
+  tabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const idx = Number(tab.getAttribute('data-voices-tab'));
+      if (Number.isNaN(idx)) return;
+      show(idx);
+      startAuto();
+    });
+  });
+
+  root.addEventListener('mouseenter', stopAuto);
+  root.addEventListener('mouseleave', startAuto);
+  show(0);
+  startAuto();
 }
 
 function setupProductModal() {
@@ -2174,23 +2615,6 @@ if (document.readyState === 'loading') {
 	executeMain();
 }
 
-// También intentar ejecutar después de un pequeño delay por si acaso
-setTimeout(() => {
-	console.log('🔄 Timeout ejecutado, verificando carrusel...');
-	const carousel = document.querySelector('.piezas-des-carousel');
-	console.log('Carrusel en timeout:', !!carousel);
-	console.log('setupPiezasDestacadasCarousel existe:', typeof setupPiezasDestacadasCarousel);
-	if (carousel && typeof setupPiezasDestacadasCarousel === 'function') {
-		console.log('🔄 Reintentando inicializar carrusel después de delay...');
-		setupPiezasDestacadasCarousel();
-	} else {
-		console.error('❌ No se puede inicializar carrusel:', {
-			carousel: !!carousel,
-			functionExists: typeof setupPiezasDestacadasCarousel === 'function'
-		});
-	}
-}, 500);
-
 // Blog Modal Functions
 window.openBlogModal = function (id) {
 	const modal = document.getElementById(id);
@@ -2206,115 +2630,6 @@ window.closeBlogModal = function (id) {
 		document.body.style.overflow = '';
 	}
 };
-
-// Función para inicializar el carrusel de piezas destacadas
-window.setupPiezasDestacadasCarousel = function setupPiezasDestacadasCarousel() {
-	const carousel = document.querySelector('.piezas-des-carousel');
-	if (!carousel) return;
-	if (carousel.dataset.carouselInit === '1') return;
-	
-	const slidesContainer = document.querySelector('#featuredCarousel');
-	const slides = document.querySelectorAll('.piezas-des-slide');
-	const dotsContainer = document.querySelector('.piezas-des-dots');
-	
-	if (!slidesContainer || !slides.length || !dotsContainer) {
-		return;
-	}
-
-	const totalSlides = slides.length;
-	carousel.dataset.carouselInit = '1';
-	carousel.setAttribute('tabindex', '0');
-	
-	let currentSlide = 0;
-	let autoSlideInterval;
-	
-	// Crear puntos de navegación
-	dotsContainer.innerHTML = ''; // Limpiar puntos existentes
-	for (let i = 0; i < totalSlides; i++) {
-		const dot = document.createElement('div');
-		dot.classList.add('piezas-des-dot');
-		if (i === 0) dot.classList.add('active');
-		dot.addEventListener('click', () => goToSlide(i));
-		dotsContainer.appendChild(dot);
-	}
-	
-	const dots = document.querySelectorAll('.piezas-des-dot');
-	
-	// Función para ir a una diapositiva específica
-	function goToSlide(slideIndex) {
-		currentSlide = slideIndex;
-		updateCarousel();
-		resetAutoSlide(); // Reiniciar el autoavance cuando se navega manualmente
-	}
-	
-	// Función para actualizar el carrusel
-	function updateCarousel() {
-		slidesContainer.style.transform = `translateX(-${currentSlide * 100}%)`;
-		
-		// Actualizar puntos activos
-		dots.forEach((dot, index) => {
-			dot.classList.toggle('active', index === currentSlide);
-		});
-	}
-	
-	// Función para avanzar al siguiente slide
-	function nextSlide() {
-		currentSlide = (currentSlide + 1) % totalSlides;
-		updateCarousel();
-	}
-	
-	// Función para retroceder al slide anterior
-	function prevSlide() {
-		currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-		updateCarousel();
-	}
-	
-	// Función para iniciar el autoavance
-	function startAutoSlide() {
-		if (autoSlideInterval) clearInterval(autoSlideInterval);
-		autoSlideInterval = setInterval(nextSlide, 4000); // Cambia cada 4 segundos
-	}
-	
-	// Función para detener el autoavance
-	function stopAutoSlide() {
-		if (autoSlideInterval) {
-			clearInterval(autoSlideInterval);
-			autoSlideInterval = null;
-		}
-	}
-	
-	// Función para reiniciar el autoavance
-	function resetAutoSlide() {
-		stopAutoSlide();
-		startAutoSlide();
-	}
-	
-	// Eventos para las flechas - REMOVIDO (ya no existen las flechas)
-	
-	// Pausar autoavance al pasar el mouse
-	carousel.addEventListener('mouseenter', stopAutoSlide);
-	carousel.addEventListener('mouseleave', startAutoSlide);
-	
-	// Navegación con teclado (solo cuando el carrusel está visible)
-	carousel.addEventListener('keydown', (e) => {
-		if (e.key === 'ArrowLeft') {
-			e.preventDefault();
-			prevSlide();
-			resetAutoSlide();
-		} else if (e.key === 'ArrowRight') {
-			e.preventDefault();
-			nextSlide();
-			resetAutoSlide();
-		}
-	});
-	
-	// Inicializar posición
-	updateCarousel();
-	
-	// Iniciar autoavance al cargar la página
-	startAutoSlide();
-	
-}
 
 // Cambiar entre login y registro desde los enlaces (ya definido arriba)
 
@@ -2554,7 +2869,7 @@ function showAddToCartMessage(productId, quantity) {
       background: #d4edda;
       color: #155724;
       border: 1px solid #c3e6cb;
-      font-family: "GFS Didot", serif;
+      font-family: "Montserrat", system-ui, sans-serif;
       font-weight: 500;
       z-index: 10000;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1);
@@ -2741,6 +3056,8 @@ async function renderProductPage() {
       </div>
     </section>
   `;
+
+  await renderSeguirExplorandoForProduct(product);
 }
 
 // Funciones auxiliares para la página de producto
