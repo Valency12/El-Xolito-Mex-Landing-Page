@@ -1090,6 +1090,23 @@ img{ display:block; max-width:100%; height:auto; }
   text-align:center; margin-bottom:1rem; font-size:1.1rem; font-weight:600;
 }
 .cart-checkout{ width:100%; }
+.cart-whatsapp{ width:100%; }
+
+.btn-whatsapp{
+  background:#25d366;
+  color:#fff;
+  border:1px solid #25d366;
+}
+.btn-whatsapp:hover,
+.btn-whatsapp:focus-visible{
+  background:#1da851;
+  border-color:#1da851;
+  color:#fff;
+}
+.btn-whatsapp:disabled{
+  opacity:.55;
+  cursor:not-allowed;
+}
 
 /* Responsive Updates */
 @media (max-width: 720px){

@@ -1,0 +1,22 @@
+# Blueprint para desplegar la API en Render (plan gratuito).
+# Conectar repo en https://dashboard.render.com → New → Blueprint
+services:
+  - type: web
+    name: elxolito-api
+    runtime: node
+    plan: free
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20.18.1"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: CORS_ORIGINS
+        value: https://www.elxolitomex.com,https://elxolitomex.com
+      - key: ADMIN_EMAIL
+        value: admin@elxolitomex.com

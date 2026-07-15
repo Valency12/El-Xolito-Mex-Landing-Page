@@ -75,8 +75,8 @@ const CATEGORY_IMAGE_BY_SLUG = {
   conjuntos: 'assets/Categorias/conjunto.png'
 };
 
-/** Tras "Proceder al pago" sin sesión: abrir login y reintentar checkout al autenticarse */
-const PENDING_CHECKOUT_KEY = 'pendingCheckout';
+/** Tras cotizar por WhatsApp sin sesión: al iniciar sesión, registrar pedido y abrir WhatsApp */
+const PENDING_WHATSAPP_KEY = 'pendingWhatsApp';
 
 function escapeHtml(text) {
 	if (text == null || text === '') return '';
@@ -273,7 +273,7 @@ class Cart {
 		});
 
 		// Actualizar el contenido del carrito modal si existe (incluso si está cerrado)
-		const checkoutBtns = document.querySelectorAll('.cart-checkout');
+		const whatsappBtns = document.querySelectorAll('.cart-whatsapp');
 		const authed = typeof window.authService !== 'undefined' && window.authService.isAuthenticated();
 		const hintEl = document.getElementById('cartCheckoutHint');
 		if (hintEl) {
@@ -282,17 +282,17 @@ class Cart {
 				hintEl.textContent = '';
 			} else if (!authed) {
 				hintEl.hidden = false;
-				hintEl.textContent = 'Inicia sesión para completar tu compra.';
+				hintEl.textContent = 'Puedes cotizar sin cuenta. Si inicias sesión, el pedido queda registrado en el sistema.';
 			} else {
-				hintEl.hidden = true;
-				hintEl.textContent = '';
+				hintEl.hidden = false;
+				hintEl.textContent = 'Al cotizar, registramos tu pedido y abrimos WhatsApp con el detalle.';
 			}
 		}
-		checkoutBtns.forEach((btn) => {
+		whatsappBtns.forEach((btn) => {
 			btn.disabled = this.items.length === 0;
 		});
 
-		if (cartItems && cartTotal && cartEmpty && cartCheckout) {
+		if (cartItems && cartTotal && cartEmpty) {
 			if (this.items.length === 0) {
 				cartItems.style.display = 'none';
 				cartEmpty.style.display = 'block';
@@ -1321,12 +1321,91 @@ function setupCart() {
 		}
 	});
 
-	setupCheckoutListeners();
+	setupWhatsAppListeners();
 }
 
 /**
- * Checkout: requiere sesión. Sincroniza carrito local con API y crea pedido.
+ * Cotizar por WhatsApp: opcionalmente registra pedido si hay sesión, luego abre wa.me con el detalle.
  */
+function setupWhatsAppListeners() {
+	document.querySelectorAll('.cart-whatsapp').forEach((btn) => {
+		btn.addEventListener('click', onCartWhatsAppClick);
+	});
+}
+
+async function onCartWhatsAppClick(e) {
+	e.preventDefault();
+	if (!cart.items.length) return;
+	await runWhatsAppQuoteFlow();
+}
+
+async function runWhatsAppQuoteFlow({ items = null, skipOrder = false } = {}) {
+	const sourceItems = (items && items.length ? items : cart.items).map((item) => ({ ...item }));
+	if (!sourceItems.length) return;
+
+	if (!window.whatsAppService?.openWhatsAppQuote) {
+		showAuthMessage('No se pudo abrir WhatsApp. Recarga la página e intenta de nuevo.', 'error');
+		return;
+	}
+
+	const buttons = document.querySelectorAll('.cart-whatsapp');
+	const restoreButtons = () => {
+		buttons.forEach((b) => {
+			b.disabled = cart.items.length === 0;
+			b.textContent = 'Cotizar por WhatsApp';
+		});
+	};
+	buttons.forEach((b) => {
+		b.disabled = true;
+		b.textContent = 'Preparando...';
+	});
+
+	let pedidoId = null;
+	const authed = window.authService?.isAuthenticated?.();
+	const fromCart = !items || items === cart.items;
+
+	try {
+		if (authed && !skipOrder && fromCart) {
+			const result = await window.authService.checkoutFromLocalCart(cart.items);
+			if (!result.success) {
+				showAuthMessage(result.message || 'No se pudo registrar el pedido', 'error');
+				cart.updateCartUI();
+				restoreButtons();
+				return;
+			}
+			pedidoId = result.data?.pedido_id ?? null;
+			cart.items = [];
+			cart.saveToStorage();
+			cart.updateCartUI();
+			const cartModal = document.getElementById('cartModal');
+			if (cartModal) {
+				cartModal.setAttribute('aria-hidden', 'true');
+				document.body.style.overflow = '';
+			}
+		}
+
+		const user = authed ? window.authService.getStoredUser?.() : null;
+		const customerName = user ? getUserFirstName(user) : '';
+		window.whatsAppService.openWhatsAppQuote({
+			items: sourceItems,
+			pedidoId,
+			customerName
+		});
+
+		if (pedidoId) {
+			showAuthMessage(`Pedido #${pedidoId} registrado. Te abrimos WhatsApp para confirmar.`, 'success');
+		} else {
+			showCartToast('Te abrimos WhatsApp con el detalle de tu cotización');
+		}
+	} catch (err) {
+		console.error('runWhatsAppQuoteFlow:', err);
+		showAuthMessage(err.message || 'Error al preparar la cotización', 'error');
+	} finally {
+		restoreButtons();
+	}
+}
+
+/** @deprecated Mantener para futura pasarela de pago */
 function setupCheckoutListeners() {
 	document.querySelectorAll('.cart-checkout').forEach((btn) => {
 		btn.addEventListener('click', onCartCheckoutClick);
@@ -1337,7 +1416,7 @@ async function onCartCheckoutClick(e) {
 	e.preventDefault();
 	if (!cart.items.length) return;
 	if (!window.authService?.isAuthenticated?.()) {
-		sessionStorage.setItem(PENDING_CHECKOUT_KEY, '1');
+		sessionStorage.setItem(PENDING_WHATSAPP_KEY, '1');
 		openLoginModal({
 			checkoutMessage: 'Para pagar, inicia sesión o crea una cuenta. Tu carrito se mantiene en este dispositivo.'
 		});
@@ -1443,7 +1522,7 @@ function closeAuthModal() {
 		hint.hidden = true;
 	}
 	if (!window.authService?.isAuthenticated?.()) {
-		sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+		sessionStorage.removeItem(PENDING_WHATSAPP_KEY);
 	}
 }
 
@@ -1585,8 +1664,8 @@ async function handleLogin(event) {
 			// Update UI
 			updateAuthUI(true, result.user);
 
-			const resumeCheckout = sessionStorage.getItem(PENDING_CHECKOUT_KEY) === '1';
-			if (resumeCheckout) sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+			const resumeWhatsApp = sessionStorage.getItem(PENDING_WHATSAPP_KEY) === '1';
+			if (resumeWhatsApp) sessionStorage.removeItem(PENDING_WHATSAPP_KEY);
 
 			// Close modal
 			closeAuthModal();
@@ -1598,8 +1677,8 @@ async function handleLogin(event) {
 			const displayName = result.user.nombre_completo || result.user.name || result.user.email.split('@')[0];
 			showAuthMessage(`¡Bienvenido de vuelta, ${displayName}!`);
 
-			if (resumeCheckout) {
-				await runCheckoutFlow();
+			if (resumeWhatsApp) {
+				await runWhatsAppQuoteFlow();
 			}
 		} else {
 			// Mostrar error específico del backend
@@ -1670,8 +1749,8 @@ async function handleRegister(event) {
 			// Update UI
 			updateAuthUI(true, result.user);
 
-			const resumeCheckout = sessionStorage.getItem(PENDING_CHECKOUT_KEY) === '1';
-			if (resumeCheckout) sessionStorage.removeItem(PENDING_CHECKOUT_KEY);
+			const resumeWhatsApp = sessionStorage.getItem(PENDING_WHATSAPP_KEY) === '1';
+			if (resumeWhatsApp) sessionStorage.removeItem(PENDING_WHATSAPP_KEY);
 
 			// Close modal
 			closeAuthModal();
@@ -1683,8 +1762,8 @@ async function handleRegister(event) {
 			const displayName = result.user.nombre_completo || result.user.name || result.user.email.split('@')[0];
 			showAuthMessage(`¡Cuenta creada exitosamente! Bienvenido, ${displayName}!`);
 
-			if (resumeCheckout) {
-				await runCheckoutFlow();
+			if (resumeWhatsApp) {
+				await runWhatsAppQuoteFlow();
 			} else {
 				setTimeout(() => {
 					window.location.href = 'mi-cuenta';
@@ -2841,8 +2920,8 @@ async function openProductDetail(productId) {
           <button class="btn btn-primary btn-full" onclick="addToCartFromDetail('${product.id}')">
             Añadir al carrito
           </button>
-          <button class="btn btn-outline btn-full" onclick="addToCartAndCheckout('${product.id}')">
-            Comprar ahora
+          <button class="btn btn-whatsapp btn-full" onclick="quoteProductOnWhatsApp('${product.id}')">
+            Cotizar por WhatsApp
           </button>
         </div>
       </div>
@@ -2891,23 +2970,33 @@ window.addToCartFromDetail = async function(productId) {
   showAddToCartMessage(productId, quantity);
 };
 
-// Función para añadir y proceder al checkout (modal)
+// Función para añadir y cotizar por WhatsApp (modal)
 window.addToCartAndCheckout = function(productId) {
-  const quantityInput = document.getElementById('productQuantity');
-  if (!quantityInput) return;
-  
-  const quantity = parseInt(quantityInput.value) || 1;
-  cart.addItem(productId, quantity);
-  closeProductModal();
-  
-  // Abrir el carrito después de un pequeño delay para que se actualice
-  setTimeout(() => {
-    const cartModal = document.getElementById('cartModal');
-    if (cartModal) {
-      cartModal.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-  }, 100);
+  quoteProductOnWhatsApp(productId);
+};
+
+window.quoteProductOnWhatsApp = async function quoteProductOnWhatsApp(productId) {
+  const quantityInput = document.getElementById('productPageQuantity') || document.getElementById('productQuantity');
+  const quantity = Math.max(1, parseInt(quantityInput?.value, 10) || 1);
+
+  let product = PRODUCTS.find((p) => p.id == productId);
+  if (!product) {
+    product = await getProductById(productId);
+  }
+  if (!product) {
+    showAuthMessage('No se encontró el producto para cotizar', 'error');
+    return;
+  }
+
+  const productModal = document.getElementById('productModal');
+  if (productModal && productModal.getAttribute('aria-hidden') === 'false') {
+    closeProductModal();
+  }
+
+  await runWhatsAppQuoteFlow({
+    items: [{ ...product, quantity }],
+    skipOrder: true
+  });
 };
 
 // Mensaje de confirmación al añadir al carrito
@@ -3099,7 +3188,7 @@ async function renderProductPage() {
 
           <div class="product-page-actions">
             <button class="btn btn-primary btn-full" onclick="addToCartFromProductPage('${product.id}')">Añadir al carrito</button>
-            <button class="btn btn-outline btn-full" onclick="addToCartAndCheckoutFromPage('${product.id}')">Comprar ahora</button>
+            <button class="btn btn-whatsapp btn-full" onclick="quoteProductOnWhatsApp('${product.id}')">Cotizar por WhatsApp</button>
           </div>
 
           <div class="product-page-features">
@@ -3159,19 +3248,7 @@ window.addToCartFromFeatured = function(productId) {
 };
 
 window.addToCartAndCheckoutFromPage = function addToCartAndCheckoutFromPage(productId) {
-  const quantityInput = document.getElementById('productPageQuantity');
-  if (!quantityInput) return;
-  
-  const quantity = parseInt(quantityInput.value, 10) || 1;
-  cart.addItem(productId, quantity);
-  
-  setTimeout(() => {
-    const cartModal = document.getElementById('cartModal');
-    if (cartModal) {
-      cartModal.setAttribute('aria-hidden', 'false');
-      document.body.style.overflow = 'hidden';
-    }
-  }, 100);
+  quoteProductOnWhatsApp(productId);
 };
 
 // Función para cambiar la imagen principal al hacer clic en una miniatura
