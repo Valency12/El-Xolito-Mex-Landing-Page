@@ -2,6 +2,23 @@
 
 **Recomendación:** [Render](https://render.com) — plan gratuito, conecta con GitHub y despliega Node sin VPS.
 
+## Error `invalid ELF header` / `better-sqlite3`
+
+Suele pasar si **`backend/node_modules` estaba en GitHub** compilado en Windows. Render (Linux) no puede usar esos binarios.
+
+**Solución:**
+1. Asegúrate de tener `.gitignore` con `backend/node_modules/`.
+2. En tu PC:
+   ```bash
+   git rm -r --cached backend/node_modules
+   git add .gitignore
+   git commit -m "fix: quitar node_modules de git para deploy en Render"
+   git push
+   ```
+3. En Render: **Manual Deploy → Clear build cache & deploy**.
+
+---
+
 ## Limitaciones del plan gratis (importante)
 
 | Tema | Qué pasa |

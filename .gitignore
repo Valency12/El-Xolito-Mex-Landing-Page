@@ -1,0 +1,16 @@
+# Dependencias (Render/Linux debe compilarlas con npm install)
+backend/node_modules/
+
+# Secretos
+backend/.env
+.env
+.env.*
+
+# SQLite temporales (no commitear)
+database/*.db-shm
+database/*.db-wal
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.log
