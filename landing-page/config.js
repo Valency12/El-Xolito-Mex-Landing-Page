@@ -14,7 +14,7 @@
 (function (w) {
   if (typeof w === 'undefined' || !w) return;
   if (!w.__EL_XOLITO_API__) {
-    w.__EL_XOLITO_API__ = 'http://localhost:3000/api';
+    w.__EL_XOLITO_API__ = 'https://elxolito-api.onrender.com/api';
   }
   // Producción: URL pública del sitio (sin barra final). Usada en enlaces de WhatsApp.
   if (!w.__EL_XOLITO_SITE_URL__) {
