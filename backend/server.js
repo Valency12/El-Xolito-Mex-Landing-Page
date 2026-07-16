@@ -51,7 +51,7 @@ app.listen(PORT, () => {
   console.log(`Servidor escuchando en http://localhost:${PORT}`);
   console.log(`  Productos:  GET http://localhost:${PORT}/api/products`);
   console.log(`  Categorías: GET http://localhost:${PORT}/api/categories`);
-  console.log(`  Auth:       POST http://localhost:${PORT}/api/auth/register | /api/auth/login`);
+  console.log(`  Auth:       POST http://localhost:${PORT}/api/auth/register | /login | /google`);
   console.log(`  Carrito:    GET/POST/PATCH/DELETE http://localhost:${PORT}/api/cart (auth)`);
   console.log(`  Pedidos:    POST/GET http://localhost:${PORT}/api/orders (auth)`);
   console.log(`  Contenido:  GET http://localhost:${PORT}/api/content/banners | /voices`);

@@ -2772,73 +2772,143 @@ window.closeBlogModal = function (id) {
 
 // Cambiar entre login y registro desde los enlaces (ya definido arriba)
 
-// --- Login con Google ---
-window.onload = function() {
-  const googleLoginButton = document.getElementById("googleLoginModal");
-  const googleRegisterButton = document.getElementById("googleRegisterModal");
+// --- Login con Google (Identity Services) ---
+let googleIdInitialized = false;
 
-  if (googleLoginButton) {
-    googleLoginButton.addEventListener("click", () => {
-      if (typeof google !== 'undefined' && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: "TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com",
-          callback: handleCredentialResponse
-        });
-        google.accounts.id.prompt(); // muestra la ventana emergente
-      }
-    });
-  }
-  
-  if (googleRegisterButton) {
-    googleRegisterButton.addEventListener("click", () => {
-      if (typeof google !== 'undefined' && google.accounts) {
-        google.accounts.id.initialize({
-          client_id: "TU_CLIENT_ID_DE_GOOGLE.apps.googleusercontent.com",
-          callback: handleCredentialResponse
-        });
-        google.accounts.id.prompt(); // muestra la ventana emergente
-      }
-    });
-  }
-};
-
-// Manejar la respuesta de Google
-function handleCredentialResponse(response) {
-  // Decodificar el JWT para obtener datos del usuario
-  const data = parseJwt(response.credential);
-  console.log("Usuario autenticado con Google:", data);
-
-  alert(`¡Hola, ${data.name}! Has iniciado sesión con Google`);
+function getGoogleClientId() {
+	if (typeof window.getElXolitoGoogleClientId === 'function') {
+		return window.getElXolitoGoogleClientId();
+	}
+	return String(window.__EL_XOLITO_GOOGLE_CLIENT_ID__ || '').trim();
 }
 
-// Decodificador JWT simple
-function parseJwt(token) {
-  const base64Url = token.split(".")[1];
-  const base64 = base64Url.replace(/-/g, "+").replace(/_/g, "/");
-  const jsonPayload = decodeURIComponent(
-    atob(base64)
-      .split("")
-      .map(c => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
-      .join("")
-  );
-  return JSON.parse(jsonPayload);
-}
-// Botones de Apple
-const appleLoginButton = document.getElementById("appleLoginModal");
-const appleRegisterButton = document.getElementById("appleRegisterModal");
-
-if (appleLoginButton) {
-  appleLoginButton.addEventListener("click", () => {
-    alert("Inicio con Apple disponible próximamente 🍎");
-  });
-}
-
-if (appleRegisterButton) {
-  appleRegisterButton.addEventListener("click", () => {
-    alert("Inicio con Apple disponible próximamente 🍎");
-  });
+function ensureGoogleIdentityReady() {
+	const clientId = getGoogleClientId();
+	if (!clientId) {
+		showAuthMessage(
+			'Login con Google aún no está configurado. Agrega el Client ID en config.js.',
+			'error'
+		);
+		return false;
+	}
+	if (typeof google === 'undefined' || !google.accounts?.id) {
+		showAuthMessage('Google aún se está cargando. Espera un segundo e intenta de nuevo.', 'error');
+		return false;
+	}
+	if (!googleIdInitialized) {
+		google.accounts.id.initialize({
+			client_id: clientId,
+			callback: handleGoogleCredentialResponse,
+			auto_select: false,
+			cancel_on_tap_outside: true,
+			use_fedcm_for_prompt: true
+		});
+		googleIdInitialized = true;
+	}
+	return true;
 }
 
+function showGoogleOfficialButtonFallback() {
+	let host = document.getElementById('googleOfficialBtnHost');
+	if (!host) {
+		host = document.createElement('div');
+		host.id = 'googleOfficialBtnHost';
+		host.style.cssText = 'margin: 0.75rem 0 0; display: flex; justify-content: center;';
+		const social = document.querySelector('#loginModal .social-login, #registerModal .social-login');
+		if (social) social.appendChild(host);
+		else document.body.appendChild(host);
+	}
+	host.innerHTML = '';
+	host.hidden = false;
+	google.accounts.id.renderButton(host, {
+		theme: 'outline',
+		size: 'large',
+		text: 'continue_with',
+		shape: 'rectangular',
+		width: 280
+	});
+	showAuthMessage('Usa el botón de Google que aparece abajo para continuar.', 'success');
+}
+
+function startGoogleSignIn() {
+	if (!ensureGoogleIdentityReady()) return;
+	try {
+		google.accounts.id.prompt((notification) => {
+			if (!notification) return;
+			if (notification.isNotDisplayed?.() || notification.isSkippedMoment?.() || notification.isDismissedMoment?.()) {
+				showGoogleOfficialButtonFallback();
+			}
+		});
+	} catch (err) {
+		console.error('Google prompt error:', err);
+		showGoogleOfficialButtonFallback();
+	}
+}
+
+async function completeAuthSession(user, welcomePrefix = '¡Bienvenido') {
+	updateAuthUI(true, user);
+	const resumeWhatsApp = sessionStorage.getItem(PENDING_WHATSAPP_KEY) === '1';
+	if (resumeWhatsApp) sessionStorage.removeItem(PENDING_WHATSAPP_KEY);
+	closeAuthModal();
+	const displayName = user.nombre_completo || user.name || (user.email || '').split('@')[0] || 'de vuelta';
+	showAuthMessage(`${welcomePrefix}, ${displayName}!`);
+	if (resumeWhatsApp) {
+		await runWhatsAppQuoteFlow();
+	}
+}
+
+async function handleGoogleCredentialResponse(response) {
+	try {
+		if (!response?.credential) {
+			showAuthMessage('No se pudo obtener la sesión de Google.', 'error');
+			return;
+		}
+		showAuthMessage('Verificando cuenta de Google…');
+		const result = await window.authService.loginWithGoogle(response.credential);
+		if (!result.success) {
+			showAuthMessage(result.message || 'Error al iniciar sesión con Google', 'error');
+			return;
+		}
+		const host = document.getElementById('googleOfficialBtnHost');
+		if (host) host.hidden = true;
+		await completeAuthSession(result.user);
+	} catch (err) {
+		console.error('handleGoogleCredentialResponse:', err);
+		showAuthMessage(err.message || 'Error al iniciar sesión con Google', 'error');
+	}
+}
+
+function setupGoogleAuthButtons() {
+	const buttons = [
+		document.getElementById('googleLoginModal'),
+		document.getElementById('googleRegisterModal')
+	].filter(Boolean);
+
+	buttons.forEach((btn) => {
+		btn.addEventListener('click', (e) => {
+			e.preventDefault();
+			startGoogleSignIn();
+		});
+	});
+
+	// Precargar initialize cuando el script de Google esté listo
+	const tryInit = () => {
+		if (getGoogleClientId() && typeof google !== 'undefined' && google.accounts?.id) {
+			ensureGoogleIdentityReady();
+		}
+	};
+	if (document.readyState === 'complete') {
+		setTimeout(tryInit, 400);
+	} else {
+		window.addEventListener('load', () => setTimeout(tryInit, 400));
+	}
+}
+
+if (document.readyState === 'loading') {
+	document.addEventListener('DOMContentLoaded', setupGoogleAuthButtons);
+} else {
+	setupGoogleAuthButtons();
+}
 
 async function openProductDetail(productId) {
   console.log('Abriendo producto:', productId); // Para debug

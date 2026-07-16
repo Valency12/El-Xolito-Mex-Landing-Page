@@ -1,0 +1,14 @@
+# URLs limpias: /tienda → tienda.html (Hostinger / Apache)
+Options -MultiViews
+RewriteEngine On
+
+# Si el archivo o carpeta existe, no reescribir
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# /tienda → tienda.html (con query string intacta)
+RewriteRule ^tienda/?$ tienda.html [L,QSA]
+RewriteRule ^producto/?$ producto.html [L,QSA]
+RewriteRule ^mi-cuenta/?$ mi-cuenta.html [L,QSA]
+RewriteRule ^admin/?$ admin/index.html [L,QSA]

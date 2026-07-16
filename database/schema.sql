@@ -53,10 +53,13 @@ CREATE TABLE IF NOT EXISTS usuarios (
     nombre_completo TEXT,
     telefono        TEXT,
     rol             TEXT    NOT NULL DEFAULT 'cliente' CHECK (rol IN ('cliente', 'admin')),
+    google_id       TEXT    UNIQUE,
+    auth_provider   TEXT    NOT NULL DEFAULT 'local',
     created_at      TEXT    DEFAULT (datetime('now', 'localtime'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_google_id ON usuarios(google_id);
 
 -- Tabla: carrito_items (carrito por usuario, backend)
 CREATE TABLE IF NOT EXISTS carrito_items (

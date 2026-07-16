@@ -24,6 +24,8 @@ function addColumnIfMissing(table, column, definition) {
 console.log('Migrando esquema admin...');
 
 addColumnIfMissing('usuarios', 'rol', "TEXT NOT NULL DEFAULT 'cliente'");
+addColumnIfMissing('usuarios', 'google_id', 'TEXT');
+addColumnIfMissing('usuarios', 'auth_provider', "TEXT NOT NULL DEFAULT 'local'");
 addColumnIfMissing('productos', 'precio_anterior', 'REAL');
 addColumnIfMissing('productos', 'imagen_blanca', 'TEXT');
 addColumnIfMissing('productos', 'orden', 'INTEGER NOT NULL DEFAULT 0');
@@ -68,6 +70,7 @@ CREATE TABLE IF NOT EXISTS voces (
 );
 CREATE INDEX IF NOT EXISTS idx_voces_activo ON voces(activo);
 CREATE INDEX IF NOT EXISTS idx_voces_orden ON voces(orden);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_usuarios_google_id ON usuarios(google_id);
 `);
 
 const voiceCount = db.prepare('SELECT COUNT(*) AS n FROM voces').get().n;

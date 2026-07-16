@@ -108,6 +108,39 @@ async function login(email, password) {
   }
 }
 
+/**
+ * Login / registro con Google Identity Services.
+ * @param {string} credential - JWT (ID token) que entrega Google en el callback
+ */
+async function loginWithGoogle(credential) {
+  try {
+    if (!credential) {
+      return { success: false, message: 'No se recibió el token de Google' };
+    }
+    const response = await apiRequest('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({ credential })
+    });
+
+    if (response.success) {
+      localStorage.setItem('accessToken', response.data.accessToken);
+      localStorage.setItem('refreshToken', response.data.refreshToken);
+      localStorage.setItem('currentUser', JSON.stringify(response.data.user));
+      return {
+        success: true,
+        user: response.data.user
+      };
+    }
+
+    throw new Error(response.message || 'Error al iniciar sesión con Google');
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'Error al iniciar sesión con Google'
+    };
+  }
+}
+
 // Cerrar sesión
 async function logout() {
   try {
@@ -290,6 +323,7 @@ async function fetchMyOrders() {
 window.authService = {
   register,
   login,
+  loginWithGoogle,
   logout,
   getCurrentUser,
   refreshToken,

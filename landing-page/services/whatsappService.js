@@ -28,13 +28,28 @@
     if (/^https?:\/\//i.test(value)) return value;
     const base = getSiteBaseUrl();
     if (!base) return value;
-    return `${base}/${value.replace(/^\/+/, '')}`;
+    // Codifica cada segmento (espacios, acentos) para que el link no se rompa
+    const clean = value
+      .replace(/^\/+/, '')
+      .split('/')
+      .map((segment) => encodeURIComponent(segment))
+      .join('/');
+    return `${base}/${clean}`;
   }
 
   function getProductPageUrl(productId) {
     const base = getSiteBaseUrl();
     const path = `producto?id=${encodeURIComponent(productId)}`;
     return base ? `${base}/${path}` : path;
+  }
+
+  /** Evita mostrar en WhatsApp nombres feos tipo "ChatGPT Image ...png" */
+  function shouldIncludePhotoLink(imagePath) {
+    if (!imagePath) return false;
+    const fileName = String(imagePath).split('/').pop() || '';
+    const ugly = /chatgpt|generated|midjourney|dall-?e|screenshot|img_\d{6,}/i.test(fileName);
+    const hasSpacesOrNoise = /\s|\,|\(/.test(fileName);
+    return !ugly && !hasSpacesOrNoise;
   }
 
   function formatMoney(amount) {
@@ -76,8 +91,12 @@
     const material = getItemMaterial(item);
     if (material) lines.push(`   Material: ${material}`);
     if (item.id) lines.push(`   Ver pieza: ${getProductPageUrl(item.id)}`);
-    const imageUrl = toAbsoluteUrl(getItemImagePath(item));
-    if (imageUrl) lines.push(`   Foto: ${imageUrl}`);
+    // Solo adjuntar link de foto si el nombre de archivo es limpio (no "ChatGPT Image...")
+    const imagePath = getItemImagePath(item);
+    if (shouldIncludePhotoLink(imagePath)) {
+      const imageUrl = toAbsoluteUrl(imagePath);
+      if (imageUrl) lines.push(`   Foto: ${imageUrl}`);
+    }
     return lines.join('\n');
   }
 
@@ -103,7 +122,7 @@
     });
     parts.push(`*Total estimado: ${formatMoney(total)}*`, '');
     parts.push('¿Podrían confirmar disponibilidad, envío y forma de pago?');
-    parts.push('Gracias 🙏');
+    parts.push('Gracias!');
 
     let message = parts.join('\n').trim();
     if (message.length > MAX_MESSAGE_CHARS) {

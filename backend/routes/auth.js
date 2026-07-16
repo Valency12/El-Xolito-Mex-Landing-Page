@@ -1,23 +1,31 @@
 /**
- * Rutas de autenticación (registro, login, me, logout, refresh).
+ * Rutas de autenticación (registro, login, Google, me, logout, refresh).
  * Base: /api/auth
  */
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
 const { authenticate, JWT_SECRET } = require('../middleware/auth');
+const { ensureGoogleAuthSchema } = require('../lib/ensureGoogleAuth');
+
+ensureGoogleAuthSchema();
 
 const ACCESS_EXPIRY = '1h';
 const REFRESH_EXPIRY = '7d';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
+const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || '').trim();
+const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
 }
 
 function comparePassword(password, hash) {
+  if (!password || !hash) return false;
   return bcrypt.compareSync(password, hash);
 }
 
@@ -28,8 +36,18 @@ function sanitizeUser(row) {
     email: row.email,
     nombre_completo: row.nombre_completo || '',
     telefono: row.telefono || '',
-    rol: row.rol || 'cliente'
+    rol: row.rol || 'cliente',
+    auth_provider: row.auth_provider || 'local'
   };
+}
+
+function issueTokens(user) {
+  const payload = { userId: user.id, email: user.email, rol: user.rol || 'cliente' };
+  const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
+  const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, REFRESH_SECRET, {
+    expiresIn: REFRESH_EXPIRY
+  });
+  return { accessToken, refreshToken };
 }
 
 /** Misma regla que el cliente: mín. 8 caracteres, mayúscula, minúscula y número */
@@ -44,6 +62,12 @@ function validatePasswordStrength(password) {
     return 'La contraseña debe incluir mayúscula, minúscula y un número';
   }
   return null;
+}
+
+function isGoogleOnlyAccount(user) {
+  if (!user) return false;
+  const provider = String(user.auth_provider || 'local').toLowerCase();
+  return provider === 'google' && !!user.google_id;
 }
 
 // POST /api/auth/register
@@ -68,8 +92,14 @@ router.post('/register', (req, res) => {
       return res.status(400).json({ success: false, message: pwdErr });
     }
     const emailNorm = String(email).trim().toLowerCase();
-    const existing = db.prepare('SELECT id FROM usuarios WHERE email = ?').get(emailNorm);
+    const existing = db.prepare('SELECT id, google_id, auth_provider FROM usuarios WHERE email = ?').get(emailNorm);
     if (existing) {
+      if (isGoogleOnlyAccount(existing)) {
+        return res.status(409).json({
+          success: false,
+          message: 'Este correo ya está registrado con Google. Usa Continuar con Google.'
+        });
+      }
       return res.status(409).json({
         success: false,
         message: 'Ya existe un usuario con ese correo'
@@ -78,21 +108,17 @@ router.post('/register', (req, res) => {
     const password_hash = hashPassword(password);
     const result = db
       .prepare(
-        'INSERT INTO usuarios (email, password_hash, nombre_completo, telefono) VALUES (?, ?, ?, ?)'
+        `INSERT INTO usuarios (email, password_hash, nombre_completo, telefono, auth_provider)
+         VALUES (?, ?, ?, ?, 'local')`
       )
       .run(emailNorm, password_hash, nombreTrim, (telefono || '').trim() || null);
     const user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(result.lastInsertRowid);
-    const payload = { userId: user.id, email: user.email, rol: user.rol || 'cliente' };
-    const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
-    const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, REFRESH_SECRET, {
-      expiresIn: REFRESH_EXPIRY
-    });
+    const tokens = issueTokens(user);
     return res.status(201).json({
       success: true,
       data: {
         user: sanitizeUser(user),
-        accessToken,
-        refreshToken
+        ...tokens
       }
     });
   } catch (err) {
@@ -116,23 +142,30 @@ router.post('/login', (req, res) => {
     }
     const emailNorm = String(email).trim().toLowerCase();
     const user = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(emailNorm);
-    if (!user || !comparePassword(password, user.password_hash)) {
+    if (!user) {
       return res.status(401).json({
         success: false,
         message: 'Correo o contraseña incorrectos'
       });
     }
-    const payload = { userId: user.id, email: user.email, rol: user.rol || 'cliente' };
-    const accessToken = jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_EXPIRY });
-    const refreshToken = jwt.sign({ ...payload, type: 'refresh' }, REFRESH_SECRET, {
-      expiresIn: REFRESH_EXPIRY
-    });
+    if (isGoogleOnlyAccount(user)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Esta cuenta usa Google. Pulsa Continuar con Google.'
+      });
+    }
+    if (!comparePassword(password, user.password_hash)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Correo o contraseña incorrectos'
+      });
+    }
+    const tokens = issueTokens(user);
     return res.json({
       success: true,
       data: {
         user: sanitizeUser(user),
-        accessToken,
-        refreshToken
+        ...tokens
       }
     });
   } catch (err) {
@@ -140,6 +173,102 @@ router.post('/login', (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Error al iniciar sesión'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/google
+ * Body: { credential: "<Google ID token JWT>" }
+ * Crea o vincula usuario y devuelve tokens propios de la API.
+ */
+router.post('/google', async (req, res) => {
+  try {
+    if (!GOOGLE_CLIENT_ID || !googleClient) {
+      return res.status(503).json({
+        success: false,
+        message: 'Login con Google no está configurado en el servidor (GOOGLE_CLIENT_ID).'
+      });
+    }
+
+    const credential = String(req.body?.credential || '').trim();
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: 'Falta el token de Google (credential)'
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID
+    });
+    const payload = ticket.getPayload();
+    if (!payload || !payload.email || !payload.sub) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de Google inválido'
+      });
+    }
+    if (payload.email_verified === false) {
+      return res.status(401).json({
+        success: false,
+        message: 'El correo de Google no está verificado'
+      });
+    }
+
+    const googleId = String(payload.sub);
+    const emailNorm = String(payload.email).trim().toLowerCase();
+    const nombre =
+      String(payload.name || '').trim() ||
+      String(payload.given_name || '').trim() ||
+      emailNorm.split('@')[0];
+
+    let user = db.prepare('SELECT * FROM usuarios WHERE google_id = ?').get(googleId);
+
+    if (!user) {
+      user = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(emailNorm);
+      if (user) {
+        db.prepare(
+          `UPDATE usuarios
+           SET google_id = ?,
+               nombre_completo = COALESCE(NULLIF(TRIM(nombre_completo), ''), ?)
+           WHERE id = ?`
+        ).run(googleId, nombre, user.id);
+        user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(user.id);
+      } else {
+        const randomPassword = crypto.randomBytes(32).toString('hex');
+        const password_hash = hashPassword(randomPassword);
+        const result = db
+          .prepare(
+            `INSERT INTO usuarios (email, password_hash, nombre_completo, google_id, auth_provider)
+             VALUES (?, ?, ?, ?, 'google')`
+          )
+          .run(emailNorm, password_hash, nombre, googleId);
+        user = db.prepare('SELECT * FROM usuarios WHERE id = ?').get(result.lastInsertRowid);
+      }
+    }
+
+    const tokens = issueTokens(user);
+    return res.json({
+      success: true,
+      data: {
+        user: sanitizeUser(user),
+        ...tokens
+      }
+    });
+  } catch (err) {
+    console.error('Error POST /api/auth/google:', err);
+    const msg = String(err?.message || '');
+    if (/Wrong recipient|audience|Token used too late|Invalid token/i.test(msg)) {
+      return res.status(401).json({
+        success: false,
+        message: 'Token de Google inválido o expirado'
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'Error al iniciar sesión con Google'
     });
   }
 });
