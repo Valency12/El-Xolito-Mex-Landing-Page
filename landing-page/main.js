@@ -2339,9 +2339,16 @@ async function main() {
 }
 
 function resolveSiteAsset(path) {
-  if (!path) return '';
-  if (/^https?:\/\//i.test(path)) return path;
-  return String(path).replace(/^\//, '');
+	if (!path) return '';
+	if (/^https?:\/\//i.test(path)) return path;
+	const clean = String(path).replace(/^\//, '');
+	// Imágenes subidas desde admin: se sirven en la API (Render)
+	if (clean.startsWith('assets/uploads/') || clean.startsWith('uploads/')) {
+		const filename = clean.split('/').pop();
+		const apiOrigin = getElXolitoApiBaseForMain().replace(/\/api\/?$/, '');
+		return `${apiOrigin}/uploads/${filename}`;
+	}
+	return clean;
 }
 
 function applyHeroBanner(banner) {

@@ -25,7 +25,7 @@ Suele pasar si **`backend/node_modules` estaba en GitHub** compilado en Windows.
 |------|----------|
 | **Inactividad** | Tras ~15 min sin visitas, el servicio “duerme”. La primera petición puede tardar **30–60 s** en despertar. |
 | **SQLite** | La base vive en el servidor de Render. **Cambios en la BD pueden perderse** si Render redeploya o recrea el contenedor. Haz copias del `.db` periódicamente. |
-| **Subidas del admin** | Las fotos que subes desde el panel se guardan **en Render**, no en Hostinger. Para que se vean en `www.elxolitomex.com`, tendrías que subirlas también a `assets/` en Hostinger (o usar un almacén en la nube más adelante). |
+| **Subidas del admin** | Las fotos del panel se guardan en Render (`/uploads`) y se muestran con URL de la API. En plan free, un redeploy puede borrar archivos del disco: vuelve a subir la imagen si desaparece. |
 | **Costo** | $0/mes en el plan free de Render. |
 
 Para una joyería empezando, suele bastar. Si crece el tráfico o necesitas BD estable, luego migras a VPS o Postgres.

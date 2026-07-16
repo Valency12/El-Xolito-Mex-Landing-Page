@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
 
 const productosRouter = require('./routes/productos');
 const categoriasRouter = require('./routes/categorias');
@@ -29,6 +30,16 @@ const corsOptions = corsOrigins
 app.use(cors(corsOptions));
 app.use(express.json());
 
+// Imágenes subidas desde el admin (Render) — públicas en /uploads/*
+const uploadsDir = path.join(__dirname, 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use('/uploads', express.static(uploadsDir, { maxAge: '7d' }));
+// Compatibilidad: subidas viejas guardadas en landing-page/assets/uploads
+const legacyUploadsDir = path.join(__dirname, '..', 'landing-page', 'assets', 'uploads');
+if (fs.existsSync(legacyUploadsDir)) {
+  app.use('/uploads', express.static(legacyUploadsDir, { maxAge: '7d' }));
+}
+
 // API
 app.use('/api/products', productosRouter);
 app.use('/api/categories', categoriasRouter);
@@ -55,5 +66,6 @@ app.listen(PORT, () => {
   console.log(`  Carrito:    GET/POST/PATCH/DELETE http://localhost:${PORT}/api/cart (auth)`);
   console.log(`  Pedidos:    POST/GET http://localhost:${PORT}/api/orders (auth)`);
   console.log(`  Contenido:  GET http://localhost:${PORT}/api/content/banners | /voices`);
+  console.log(`  Uploads:    GET http://localhost:${PORT}/uploads/<archivo>`);
   console.log(`  Admin:      /api/admin/products | /api/admin/banners | /api/admin/voices | /api/admin/orders | /api/admin/upload`);
 });

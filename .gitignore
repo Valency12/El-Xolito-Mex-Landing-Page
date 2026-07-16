@@ -6,6 +6,13 @@ backend/.env
 .env
 .env.*
 
+# Documento de entrega con credenciales (no publicar)
+ENTREGA.md
+
+# Subidas del admin (se generan en el servidor)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # SQLite temporales (no commitear)
 database/*.db-shm
 database/*.db-wal

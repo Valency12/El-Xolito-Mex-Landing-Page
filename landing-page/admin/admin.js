@@ -27,10 +27,20 @@
       : 'http://localhost:3000/api');
   }
 
+  function apiOrigin() {
+    return apiBase().replace(/\/api\/?$/, '');
+  }
+
   function assetUrl(path) {
     if (!path) return '';
-    if (path.startsWith('http')) return path;
-    return '../' + path.replace(/^\//, '');
+    if (/^https?:\/\//i.test(path)) return path;
+    const clean = String(path).replace(/^\//, '');
+    // Subidas del admin viven en la API (Render), no en Hostinger
+    if (clean.startsWith('assets/uploads/') || clean.startsWith('uploads/')) {
+      const filename = clean.split('/').pop();
+      return `${apiOrigin()}/uploads/${filename}`;
+    }
+    return '../' + clean;
   }
 
   function formatPrice(n) {

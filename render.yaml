@@ -20,5 +20,7 @@ services:
         value: https://www.elxolitomex.com,https://elxolitomex.com
       - key: GOOGLE_CLIENT_ID
         sync: false
+      - key: PUBLIC_BASE_URL
+        value: https://elxolito-api.onrender.com
       - key: ADMIN_EMAIL
         value: admin@elxolitomex.com
