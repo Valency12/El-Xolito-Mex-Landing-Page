@@ -11,14 +11,23 @@ const { OAuth2Client } = require('google-auth-library');
 const db = require('../db');
 const { authenticate, JWT_SECRET } = require('../middleware/auth');
 const { ensureGoogleAuthSchema } = require('../lib/ensureGoogleAuth');
+const { ensurePasswordResetSchema } = require('../lib/ensurePasswordReset');
+const { sendMail, isMailConfigured } = require('../lib/mailer');
 
 ensureGoogleAuthSchema();
+ensurePasswordResetSchema();
 
 const ACCESS_EXPIRY = '1h';
 const REFRESH_EXPIRY = '7d';
 const REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || JWT_SECRET;
 const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || '').trim();
 const googleClient = GOOGLE_CLIENT_ID ? new OAuth2Client(GOOGLE_CLIENT_ID) : null;
+const RESET_TOKEN_HOURS = 1;
+const SITE_URL = String(process.env.SITE_URL || 'https://www.elxolitomex.com').replace(/\/$/, '');
+
+function hashResetToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
 
 function hashPassword(password) {
   return bcrypt.hashSync(password, 10);
@@ -322,6 +331,155 @@ router.post('/refresh', (req, res) => {
     });
   } catch (err) {
     return res.status(401).json({ success: false, message: 'Token inválido o expirado' });
+  }
+});
+
+/**
+ * POST /api/auth/forgot-password
+ * Body: { email }
+ * Siempre responde éxito genérico (no revela si el correo existe).
+ */
+router.post('/forgot-password', async (req, res) => {
+  const genericMessage =
+    'Si el correo está registrado, te enviamos un enlace para restablecer tu contraseña. Revisa tu bandeja y spam.';
+
+  try {
+    if (!isMailConfigured()) {
+      return res.status(503).json({
+        success: false,
+        message:
+          'El envío de correo aún no está configurado. Contacta a soporte o usa WhatsApp mientras tanto.'
+      });
+    }
+
+    const emailNorm = String(req.body?.email || '')
+      .trim()
+      .toLowerCase();
+    if (!emailNorm || !emailNorm.includes('@')) {
+      return res.status(400).json({ success: false, message: 'Ingresa un correo válido' });
+    }
+
+    const user = db.prepare('SELECT * FROM usuarios WHERE email = ?').get(emailNorm);
+
+    if (user && !isGoogleOnlyAccount(user)) {
+      const rawToken = crypto.randomBytes(32).toString('hex');
+      const tokenHash = hashResetToken(rawToken);
+      const expiresAt = new Date(Date.now() + RESET_TOKEN_HOURS * 60 * 60 * 1000).toISOString();
+
+      db.prepare('DELETE FROM password_reset_tokens WHERE usuario_id = ?').run(user.id);
+      db.prepare(
+        `INSERT INTO password_reset_tokens (usuario_id, token_hash, expires_at)
+         VALUES (?, ?, ?)`
+      ).run(user.id, tokenHash, expiresAt);
+
+      const resetUrl = `${SITE_URL}/reset-password?token=${encodeURIComponent(rawToken)}`;
+      const nombre = user.nombre_completo || 'hola';
+
+      await sendMail({
+        to: emailNorm,
+        subject: 'Restablecer contraseña — El Xolito Mex',
+        text: `Hola ${nombre},\n\nRecibimos una solicitud para restablecer tu contraseña.\n\nAbre este enlace (válido ${RESET_TOKEN_HOURS} hora(s)):\n${resetUrl}\n\nSi no fuiste tú, ignora este correo.\n\n— El Xolito Mex`,
+        html: `
+          <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#151515;">
+            <h2 style="font-weight:500;">Restablecer contraseña</h2>
+            <p>Hola ${nombre},</p>
+            <p>Recibimos una solicitud para restablecer tu contraseña en <strong>El Xolito Mex</strong>.</p>
+            <p style="margin:28px 0;">
+              <a href="${resetUrl}" style="display:inline-block;padding:12px 20px;background:#151515;color:#fff;text-decoration:none;border-radius:4px;">
+                Elegir nueva contraseña
+              </a>
+            </p>
+            <p style="font-size:14px;color:#666;">El enlace caduca en ${RESET_TOKEN_HOURS} hora(s). Si no pediste este cambio, ignora este correo.</p>
+            <p style="font-size:13px;color:#999;word-break:break-all;">${resetUrl}</p>
+          </div>
+        `
+      });
+    }
+
+    return res.json({ success: true, message: genericMessage });
+  } catch (err) {
+    console.error('Error POST /api/auth/forgot-password:', err);
+    if (err.code === 'SMTP_NOT_CONFIGURED') {
+      return res.status(503).json({
+        success: false,
+        message: 'El envío de correo aún no está configurado.'
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: 'No se pudo enviar el correo. Intenta más tarde.'
+    });
+  }
+});
+
+/**
+ * POST /api/auth/reset-password
+ * Body: { token, password }
+ */
+router.post('/reset-password', (req, res) => {
+  try {
+    const token = String(req.body?.token || '').trim();
+    const password = String(req.body?.password || '');
+    if (!token) {
+      return res.status(400).json({ success: false, message: 'Falta el token de restablecimiento' });
+    }
+    const pwdErr = validatePasswordStrength(password);
+    if (pwdErr) {
+      return res.status(400).json({ success: false, message: pwdErr });
+    }
+
+    const tokenHash = hashResetToken(token);
+    const row = db
+      .prepare(
+        `SELECT t.*, u.email, u.auth_provider, u.google_id
+         FROM password_reset_tokens t
+         JOIN usuarios u ON u.id = t.usuario_id
+         WHERE t.token_hash = ?`
+      )
+      .get(tokenHash);
+
+    if (!row || row.used_at) {
+      return res.status(400).json({
+        success: false,
+        message: 'El enlace no es válido o ya fue usado. Solicita uno nuevo.'
+      });
+    }
+    if (new Date(row.expires_at).getTime() < Date.now()) {
+      return res.status(400).json({
+        success: false,
+        message: 'El enlace expiró. Solicita uno nuevo desde «Olvidaste tu contraseña».'
+      });
+    }
+
+    const password_hash = hashPassword(password);
+    const tx = db.transaction(() => {
+      db.prepare(
+        `UPDATE usuarios
+         SET password_hash = ?, auth_provider = 'local'
+         WHERE id = ?`
+      ).run(password_hash, row.usuario_id);
+      db.prepare(
+        `UPDATE password_reset_tokens
+         SET used_at = datetime('now', 'localtime')
+         WHERE id = ?`
+      ).run(row.id);
+      db.prepare('DELETE FROM password_reset_tokens WHERE usuario_id = ? AND id != ?').run(
+        row.usuario_id,
+        row.id
+      );
+    });
+    tx();
+
+    return res.json({
+      success: true,
+      message: 'Contraseña actualizada. Ya puedes iniciar sesión.'
+    });
+  } catch (err) {
+    console.error('Error POST /api/auth/reset-password:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Error al restablecer la contraseña'
+    });
   }
 });
 

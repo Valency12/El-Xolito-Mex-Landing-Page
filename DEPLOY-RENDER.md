@@ -127,7 +127,7 @@ Edita `landing-page/config.js` (en tu PC y vuelve a subir a `public_html`):
 ```js
 window.__EL_XOLITO_API__ = 'https://elxolito-api.onrender.com/api';
 window.__EL_XOLITO_SITE_URL__ = 'https://www.elxolitomex.com';
-window.__EL_XOLITO_WHATSAPP__ = '5214445428475';
+window.__EL_XOLITO_WHATSAPP__ = '5214402000040';
 ```
 
 (Sustituye `elxolito-api` por el nombre exacto que te dé Render.)

@@ -5,7 +5,7 @@
 (function (w) {
   'use strict';
 
-  const DEFAULT_PHONE = '5214445428475';
+  const DEFAULT_PHONE = '5214402000040';
   const MAX_MESSAGE_CHARS = 1800;
 
   function getWhatsAppPhone() {

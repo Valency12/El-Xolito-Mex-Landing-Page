@@ -25,7 +25,7 @@ Tienes **dos piezas** que desplegar por separado:
 ```js
 window.__EL_XOLITO_API__ = 'https://api.tudominio.com/api';
 window.__EL_XOLITO_SITE_URL__ = 'https://tudominio.com';
-window.__EL_XOLITO_WHATSAPP__ = '5214445428475';
+window.__EL_XOLITO_WHATSAPP__ = '5214402000040';
 ```
 
 - `__EL_XOLITO_SITE_URL__` es importante para que los enlaces de **fotos y productos** en WhatsApp salgan completos (`https://...`).

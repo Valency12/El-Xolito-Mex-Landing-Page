@@ -1276,14 +1276,29 @@ function setupNav() {
 	const list = document.querySelector('.nav-list');
 	if (!btn || !list) return;
 
-	btn.addEventListener('click', () => {
+	const closeNav = () => {
+		list.classList.remove('is-open');
+		btn.setAttribute('aria-expanded', 'false');
+	};
+
+	btn.addEventListener('click', (e) => {
+		e.stopPropagation();
 		const open = list.classList.toggle('is-open');
 		btn.setAttribute('aria-expanded', String(open));
 	});
-	list.querySelectorAll('a').forEach(a => a.addEventListener('click', () => {
-		list.classList.remove('is-open');
-		btn.setAttribute('aria-expanded', 'false');
-	}));
+	list.querySelectorAll('a').forEach((a) =>
+		a.addEventListener('click', () => {
+			closeNav();
+		})
+	);
+	document.addEventListener('click', (e) => {
+		if (!list.classList.contains('is-open')) return;
+		if (list.contains(e.target) || btn.contains(e.target)) return;
+		closeNav();
+	});
+	document.addEventListener('keydown', (e) => {
+		if (e.key === 'Escape') closeNav();
+	});
 }
 
 function setupCart() {
@@ -1797,14 +1812,117 @@ async function handleLogout() {
 	showAuthMessage('Has cerrado sesión exitosamente');
 }
 
-// Función para mostrar modal de recuperación de contraseña
-function showForgotPassword() {
-	closeAuthModal();
-	// Por ahora, mostrar un mensaje informativo
-	// En el futuro, esto puede abrir un modal específico para recuperación
-	showAuthMessage('Funcionalidad de recuperación de contraseña próximamente disponible. Contacta al administrador.', 'error');
-	// TODO: Implementar modal y endpoints de recuperación de contraseña cuando el backend esté listo
+// Recuperación de contraseña por correo
+function ensureForgotPasswordModal() {
+	let modal = document.getElementById('forgotPasswordModal');
+	if (modal) return modal;
+
+	modal = document.createElement('div');
+	modal.id = 'forgotPasswordModal';
+	modal.className = 'auth-modal';
+	modal.setAttribute('aria-hidden', 'true');
+	modal.innerHTML = `
+		<div class="auth-overlay" data-forgot-close></div>
+		<div class="auth-dialog">
+			<div class="auth-header">
+				<h3>Restablecer contraseña</h3>
+				<button type="button" class="auth-close" data-forgot-close aria-label="Cerrar">×</button>
+			</div>
+			<div class="auth-content">
+				<p class="auth-context-hint" style="display:block;margin-bottom:1rem;">
+					Te enviaremos un enlace a tu correo para elegir una nueva contraseña.
+				</p>
+				<form class="auth-form" id="forgotPasswordForm">
+					<div class="form-group">
+						<label for="forgotEmail">Email</label>
+						<input type="email" id="forgotEmail" required autocomplete="email" placeholder="tu@correo.com">
+					</div>
+					<div class="form-inicio">
+						<button type="submit" class="btn btn-primary">Enviar enlace</button>
+					</div>
+				</form>
+				<p class="auth-switch">
+					<a href="#" id="forgotBackToLogin">Volver a iniciar sesión</a>
+				</p>
+			</div>
+		</div>
+	`;
+	document.body.appendChild(modal);
+
+	modal.querySelectorAll('[data-forgot-close]').forEach((el) => {
+		el.addEventListener('click', () => closeForgotPasswordModal());
+	});
+	modal.querySelector('#forgotBackToLogin')?.addEventListener('click', (e) => {
+		e.preventDefault();
+		closeForgotPasswordModal();
+		if (typeof openLoginModal === 'function') openLoginModal();
+		else if (typeof window.openLoginModal === 'function') window.openLoginModal();
+	});
+	modal.querySelector('#forgotPasswordForm')?.addEventListener('submit', handleForgotPasswordSubmit);
+	return modal;
 }
+
+function openForgotPasswordModal() {
+	closeAuthModal();
+	const modal = ensureForgotPasswordModal();
+	modal.setAttribute('aria-hidden', 'false');
+	document.body.style.overflow = 'hidden';
+	const input = document.getElementById('forgotEmail');
+	const loginEmail = document.getElementById('loginEmail');
+	if (input) {
+		input.value = loginEmail?.value || '';
+		setTimeout(() => input.focus(), 50);
+	}
+}
+
+function closeForgotPasswordModal() {
+	const modal = document.getElementById('forgotPasswordModal');
+	if (!modal) return;
+	modal.setAttribute('aria-hidden', 'true');
+	document.body.style.overflow = '';
+}
+
+async function handleForgotPasswordSubmit(event) {
+	event.preventDefault();
+	const email = String(document.getElementById('forgotEmail')?.value || '').trim();
+	if (!email || !isValidEmail(email)) {
+		showAuthMessage('Ingresa un correo válido', 'error');
+		return;
+	}
+	const btn = event.target.querySelector('button[type="submit"]');
+	const original = btn?.textContent;
+	if (btn) {
+		btn.disabled = true;
+		btn.textContent = 'Enviando...';
+	}
+	try {
+		const result = await window.authService.forgotPassword(email);
+		if (result.success) {
+			closeForgotPasswordModal();
+			showAuthMessage(
+				result.message ||
+					'Si el correo está registrado, te enviamos un enlace. Revisa tu bandeja y spam.',
+				'success'
+			);
+		} else {
+			showAuthMessage(result.message || 'No se pudo enviar el correo', 'error');
+		}
+	} catch (err) {
+		showAuthMessage(err.message || 'Error al solicitar el restablecimiento', 'error');
+	} finally {
+		if (btn) {
+			btn.disabled = false;
+			btn.textContent = original || 'Enviar enlace';
+		}
+	}
+}
+
+function showForgotPassword() {
+	openForgotPasswordModal();
+}
+window.showForgotPassword = showForgotPassword;
+window.openForgotPasswordModal = openForgotPasswordModal;
+window.closeForgotPasswordModal = closeForgotPasswordModal;
 
 /** Primer nombre o parte local del correo para saludos */
 function getUserFirstName(user) {
@@ -2033,11 +2151,15 @@ function setupAuthModals() {
 		if (e.key === 'Escape') {
 			const loginModal = document.getElementById('loginModal');
 			const registerModal = document.getElementById('registerModal');
+			const forgotModal = document.getElementById('forgotPasswordModal');
 			if (loginModal && loginModal.getAttribute('aria-hidden') === 'false') {
 				closeAuthModal();
 			}
 			if (registerModal && registerModal.getAttribute('aria-hidden') === 'false') {
 				closeAuthModal();
+			}
+			if (forgotModal && forgotModal.getAttribute('aria-hidden') === 'false') {
+				closeForgotPasswordModal();
 			}
 		}
 	});
@@ -2047,6 +2169,20 @@ function setupAuthModals() {
 	// Verificar estado de autenticación DESPUÉS de configurar los listeners
 	// Esto asegura que los botones reemplazados también funcionen gracias a event delegation
 	checkAuthStatus();
+
+	// Tras reset de contraseña: /?login=1 abre el modal de login
+	try {
+		const params = new URLSearchParams(window.location.search);
+		if (params.get('login') === '1') {
+			setTimeout(() => openLoginModal(), 300);
+			params.delete('login');
+			const next = params.toString();
+			const clean = window.location.pathname + (next ? `?${next}` : '') + window.location.hash;
+			window.history.replaceState({}, '', clean);
+		}
+	} catch (_) {
+		/* ignore */
+	}
 }
 
 function setupYear() {

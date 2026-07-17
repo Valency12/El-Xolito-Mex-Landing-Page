@@ -4,7 +4,7 @@
  * En PRODUCCIÓN:
  *   window.__EL_XOLITO_API__ = 'https://elxolito-api.onrender.com/api';
  *   window.__EL_XOLITO_SITE_URL__ = 'https://www.elxolitomex.com';
- *   window.__EL_XOLITO_WHATSAPP__ = '5214445428475';
+ *   window.__EL_XOLITO_WHATSAPP__ = '5214402000040';
  *   window.__EL_XOLITO_GOOGLE_CLIENT_ID__ = 'TU_ID.apps.googleusercontent.com';
  *
  * Debe apuntar a la base que incluye /api (sin barra final).
@@ -20,7 +20,7 @@
   }
   // Número WhatsApp con lada de país, sin + ni espacios (México: 52 + 10 dígitos).
   if (!w.__EL_XOLITO_WHATSAPP__) {
-    w.__EL_XOLITO_WHATSAPP__ = '5214445428475';
+    w.__EL_XOLITO_WHATSAPP__ = '5214402000040';
   }
   // Google Identity Services — Client ID tipo "Aplicación web"
   // Créalo en https://console.cloud.google.com/apis/credentials

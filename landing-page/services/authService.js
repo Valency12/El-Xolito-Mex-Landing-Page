@@ -141,6 +141,44 @@ async function loginWithGoogle(credential) {
   }
 }
 
+/** Solicitar correo de restablecimiento */
+async function forgotPassword(email) {
+  try {
+    const response = await apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+    if (response.success) {
+      return { success: true, message: response.message };
+    }
+    throw new Error(response.message || 'No se pudo enviar el correo');
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'No se pudo enviar el correo'
+    };
+  }
+}
+
+/** Guardar nueva contraseña con token del enlace */
+async function resetPassword(token, password) {
+  try {
+    const response = await apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, password })
+    });
+    if (response.success) {
+      return { success: true, message: response.message };
+    }
+    throw new Error(response.message || 'No se pudo restablecer la contraseña');
+  } catch (error) {
+    return {
+      success: false,
+      message: error.message || 'No se pudo restablecer la contraseña'
+    };
+  }
+}
+
 // Cerrar sesión
 async function logout() {
   try {
@@ -324,6 +362,8 @@ window.authService = {
   register,
   login,
   loginWithGoogle,
+  forgotPassword,
+  resetPassword,
   logout,
   getCurrentUser,
   refreshToken,

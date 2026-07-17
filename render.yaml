@@ -22,5 +22,19 @@ services:
         sync: false
       - key: PUBLIC_BASE_URL
         value: https://elxolito-api.onrender.com
+      - key: SITE_URL
+        value: https://www.elxolitomex.com
+      - key: SMTP_HOST
+        value: smtp.hostinger.com
+      - key: SMTP_PORT
+        value: "465"
+      - key: SMTP_SECURE
+        value: "true"
+      - key: SMTP_USER
+        value: hola@elxolitomex.com
+      - key: SMTP_PASS
+        sync: false
+      - key: MAIL_FROM
+        value: hola@elxolitomex.com
       - key: ADMIN_EMAIL
         value: admin@elxolitomex.com
