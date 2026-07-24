@@ -2,6 +2,30 @@
 Options -MultiViews
 RewriteEngine On
 
+# Cache de assets estáticos (imágenes, CSS, JS)
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType image/webp "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType video/mp4 "access plus 30 days"
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType text/javascript "access plus 7 days"
+</IfModule>
+<IfModule mod_headers.c>
+  <FilesMatch "\.(webp|jpg|jpeg|png|gif|svg|mp4)$">
+    Header set Cache-Control "public, max-age=2592000"
+  </FilesMatch>
+  <FilesMatch "\.(css|js)$">
+    Header set Cache-Control "public, max-age=604800"
+  </FilesMatch>
+  <FilesMatch "\.(html)$">
+    Header set Cache-Control "public, max-age=300"
+  </FilesMatch>
+</IfModule>
+
 # Si el archivo o carpeta existe, no reescribir
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
@@ -12,4 +36,9 @@ RewriteRule ^tienda/?$ tienda.html [L,QSA]
 RewriteRule ^producto/?$ producto.html [L,QSA]
 RewriteRule ^mi-cuenta/?$ mi-cuenta.html [L,QSA]
 RewriteRule ^reset-password/?$ reset-password.html [L,QSA]
+RewriteRule ^aviso-privacidad/?$ aviso-privacidad.html [L,QSA]
+RewriteRule ^terminos/?$ terminos.html [L,QSA]
+RewriteRule ^cuidado-joyas/?$ cuidado-joyas.html [L,QSA]
+RewriteRule ^preguntas-frecuentes/?$ preguntas-frecuentes.html [L,QSA]
+RewriteRule ^blog/?$ blog.html [L,QSA]
 RewriteRule ^admin/?$ admin/index.html [L,QSA]

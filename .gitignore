@@ -21,3 +21,6 @@ database/*.db-wal
 .DS_Store
 Thumbs.db
 *.log
+
+# Herramienta local de compresión de imágenes
+tools-img/

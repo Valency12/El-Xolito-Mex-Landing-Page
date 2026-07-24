@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aviso de privacidad – El Xolito Mex</title>
+  <meta name="description" content="Aviso de privacidad de El Xolito Mex. Cómo tratamos tus datos personales." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="El Xolito Mex">
+        <img src="assets/Logos/logo3.jpeg" alt="El Xolito Mex" class="brand-logo" />
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <ul class="nav-list">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="tienda">Tienda</a></li>
+          <li><a href="/#ofertas">Ofertas</a></li>
+          <li><a href="/#nosotros">Nosotros</a></li>
+          <li><a href="/#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="tienda" class="btn btn-outline" style="padding:0.45rem 0.9rem;font-size:0.75rem;">Ir a tienda</a>
+      </div>
+    </div>
+    <div class="border-mex"></div>
+  </header>
+
+  <main class="info-page">
+    <div class="container info-page__inner">
+      <p class="info-page__eyebrow">Legal</p>
+      <h1 class="info-page__title">Aviso de privacidad</h1>
+      <p class="info-page__lead">En El Xolito Mex cuidamos tu información. Este aviso explica qué datos recabamos y para qué los usamos.</p>
+      <p class="info-page__updated">Última actualización: julio 2026</p>
+
+      <h2>1. Responsable</h2>
+      <p>El responsable del tratamiento de tus datos es <strong>El Xolito Mex</strong>. Para ejercer tus derechos o aclarar dudas, escríbenos a <a href="mailto:hola@elxolitomex.com">hola@elxolitomex.com</a> o por WhatsApp.</p>
+
+      <h2>2. Datos que recabamos</h2>
+      <ul>
+        <li>Nombre y correo electrónico al crear una cuenta.</li>
+        <li>Teléfono, si lo proporcionas de forma opcional.</li>
+        <li>Información de pedidos y cotizaciones relacionadas con tu cuenta.</li>
+        <li>Datos técnicos básicos de navegación (por ejemplo, para que el sitio funcione correctamente).</li>
+      </ul>
+
+      <h2>3. Finalidades</h2>
+      <ul>
+        <li>Crear y administrar tu cuenta.</li>
+        <li>Atender cotizaciones, pedidos y soporte.</li>
+        <li>Enviar avisos relacionados con tu cuenta (por ejemplo, restablecer contraseña).</li>
+        <li>Mejorar la experiencia del sitio y la seguridad del servicio.</li>
+      </ul>
+
+      <h2>4. Uso de terceros</h2>
+      <p>Podemos apoyarnos en servicios necesarios para operar la tienda (alojamiento, autenticación con Google, envío de correo). Estos proveedores solo tratan la información para prestar el servicio correspondiente.</p>
+
+      <h2>5. Derechos ARCO</h2>
+      <p>Puedes solicitar acceso, rectificación, cancelación u oposición al tratamiento de tus datos escribiendo a <a href="mailto:hola@elxolitomex.com">hola@elxolitomex.com</a>. Te responderemos en un plazo razonable.</p>
+
+      <h2>6. Conservación</h2>
+      <p>Conservamos tu información mientras mantengas una cuenta activa o mientras sea necesario para cumplir obligaciones legales o de servicio.</p>
+
+      <div class="info-page__cta">
+        <p>¿Dudas sobre este aviso? Contáctanos en <a href="mailto:hola@elxolitomex.com">hola@elxolitomex.com</a>.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="border-mex"></div>
+    <div class="container footer-content">
+      <div class="footer-bottom">
+        <p class="foot-note">© <span id="year"></span> El Xolito Mex. Todos los derechos reservados.</p>
+        <div class="footer-legal">
+          <a href="terminos">Términos y condiciones</a>
+          <a href="aviso-privacidad">Aviso de privacidad</a>
+        </div>
+      </div>
+      <p class="footer-credit">
+        Desarrollado por
+        <a href="https://valency12.github.io/Mi-portafolio/" target="_blank" rel="noopener noreferrer">Valency Design</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const btn = document.querySelector('.nav-toggle');
+    const list = document.querySelector('.nav-list');
+    if (btn && list) {
+      btn.addEventListener('click', () => {
+        const open = list.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    }
+  </script>
+</body>
+</html>

@@ -44,7 +44,7 @@ const FEATURED_SHOWCASE_SLIDES = [
 		productId: 2
 	},
 	{
-		image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+		image: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..webp',
 		name: 'Anillo Centauro',
 		materials: 'Plata .925',
 		category: 'Anillos',
@@ -65,14 +65,14 @@ const FEATURED_SHOWCASE_SLIDES = [
 const PLACEHOLDER_IMAGE = 'assets/placeholder.svg';
 // Imagen de categoría por slug (archivos que sí existen en assets/Categorias/)
 const CATEGORY_IMAGE_BY_SLUG = {
-  anillos: 'assets/Categorias/anillo.png',
-  brazaletes: 'assets/Categorias/brazaletes.png',
-  collares: 'assets/Categorias/collar.png',
-  aretes: 'assets/Categorias/aretes.png',
-  broqueles: 'assets/Categorias/broqueles.png',
-  pulseras: 'assets/Categorias/pulseras.png',
-  dijes: 'assets/Categorias/dije.png',
-  conjuntos: 'assets/Categorias/conjunto.png'
+  anillos: 'assets/Categorias/anillo.webp',
+  brazaletes: 'assets/Categorias/brazaletes.webp',
+  collares: 'assets/Categorias/collar.webp',
+  aretes: 'assets/Categorias/aretes.webp',
+  broqueles: 'assets/Categorias/broqueles.webp',
+  pulseras: 'assets/Categorias/pulseras.webp',
+  dijes: 'assets/Categorias/dije.webp',
+  conjuntos: 'assets/Categorias/conjunto.webp'
 };
 
 /** Tras cotizar por WhatsApp sin sesión: al iniciar sesión, registrar pedido y abrir WhatsApp */
@@ -622,14 +622,14 @@ function renderProductsSimple(products) {
 }
 
 const EXPLORE_CATEGORY_META = {
-  anillos: { nombre: 'Anillos', image: 'assets/Categorias/anillo.png' },
-  brazaletes: { nombre: 'Brazaletes', image: 'assets/Categorias/brazaletes.png' },
-  collares: { nombre: 'Collares', image: 'assets/Categorias/collar.png' },
-  aretes: { nombre: 'Aretes', image: 'assets/Categorias/aretes.png' },
-  broqueles: { nombre: 'Broqueles', image: 'assets/Categorias/broqueles.png' },
-  pulseras: { nombre: 'Pulseras', image: 'assets/Categorias/pulseras.png' },
-  dijes: { nombre: 'Dijes', image: 'assets/Categorias/dije.png' },
-  conjuntos: { nombre: 'Conjuntos', image: 'assets/Categorias/conjunto.png' }
+  anillos: { nombre: 'Anillos', image: 'assets/Categorias/anillo.webp' },
+  brazaletes: { nombre: 'Brazaletes', image: 'assets/Categorias/brazaletes.webp' },
+  collares: { nombre: 'Collares', image: 'assets/Categorias/collar.webp' },
+  aretes: { nombre: 'Aretes', image: 'assets/Categorias/aretes.webp' },
+  broqueles: { nombre: 'Broqueles', image: 'assets/Categorias/broqueles.webp' },
+  pulseras: { nombre: 'Pulseras', image: 'assets/Categorias/pulseras.webp' },
+  dijes: { nombre: 'Dijes', image: 'assets/Categorias/dije.webp' },
+  conjuntos: { nombre: 'Conjuntos', image: 'assets/Categorias/conjunto.webp' }
 };
 
 function hideSeguirExplorando() {
@@ -828,14 +828,14 @@ function renderCategories(categories) {
 	if (!categoriesGrid) return;
 	
 	const categoryImages = {
-		'anillos': 'assets/Categorias/anillo.png',
-		'brazaletes': 'assets/Categorias/brazaletes.png',
-		'collares': 'assets/Categorias/collar.png',
-		'aretes': 'assets/Categorias/aretes.png',
-		'broqueles': 'assets/Categorias/broqueles.png',
-		'pulseras': 'assets/Categorias/pulseras.png',
-		'dijes': 'assets/Categorias/dije.png',
-		'conjuntos': 'assets/Categorias/conjunto.png'
+		'anillos': 'assets/Categorias/anillo.webp',
+		'brazaletes': 'assets/Categorias/brazaletes.webp',
+		'collares': 'assets/Categorias/collar.webp',
+		'aretes': 'assets/Categorias/aretes.webp',
+		'broqueles': 'assets/Categorias/broqueles.webp',
+		'pulseras': 'assets/Categorias/pulseras.webp',
+		'dijes': 'assets/Categorias/dije.webp',
+		'conjuntos': 'assets/Categorias/conjunto.webp'
 	};
 	const categoryDescriptions = {
 		'anillos': 'Piezas únicas para tus dedos',
@@ -2697,7 +2697,7 @@ function setupVoicesSection() {
       texto: '“Compré un anillo de plata .925 y la calidad es impresionante. La artesanía es impecable y el diseño elegante.”',
       nombre: 'María González',
       lugar: 'Ciudad de México',
-      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..png',
+      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 05_08_09 p.m..webp',
       tab_label: 'María'
     },
     {
@@ -2711,7 +2711,7 @@ function setupVoicesSection() {
       texto: '“El conjunto de aretes y anillo se siente hecho a mano. La calidad justifica la inversión y el servicio fue excelente.”',
       nombre: 'Carlos Méndez',
       lugar: 'Monterrey',
-      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..png',
+      imagen: 'assets/Anillos/ChatGPT Image 8 jul 2026, 04_37_20 p.m..webp',
       tab_label: 'Carlos'
     }
   ];
@@ -2917,6 +2917,7 @@ window.closeBlogModal = function (id) {
 
 // --- Login con Google (Identity Services) ---
 let googleIdInitialized = false;
+let googleScriptPromise = null;
 
 function getGoogleClientId() {
 	if (typeof window.getElXolitoGoogleClientId === 'function') {
@@ -2925,13 +2926,43 @@ function getGoogleClientId() {
 	return String(window.__EL_XOLITO_GOOGLE_CLIENT_ID__ || '').trim();
 }
 
-function ensureGoogleIdentityReady() {
+/** Carga el script de Google solo cuando el usuario intenta iniciar sesión */
+function loadGoogleIdentityScript() {
+	if (typeof google !== 'undefined' && google.accounts?.id) {
+		return Promise.resolve();
+	}
+	if (googleScriptPromise) return googleScriptPromise;
+	googleScriptPromise = new Promise((resolve, reject) => {
+		const existing = document.querySelector('script[data-elxolito-gsi]');
+		if (existing) {
+			existing.addEventListener('load', () => resolve());
+			existing.addEventListener('error', () => reject(new Error('No se pudo cargar Google')));
+			return;
+		}
+		const script = document.createElement('script');
+		script.src = 'https://accounts.google.com/gsi/client';
+		script.async = true;
+		script.dataset.elxolitoGsi = '1';
+		script.onload = () => resolve();
+		script.onerror = () => reject(new Error('No se pudo cargar Google'));
+		document.head.appendChild(script);
+	});
+	return googleScriptPromise;
+}
+
+async function ensureGoogleIdentityReady() {
 	const clientId = getGoogleClientId();
 	if (!clientId) {
 		showAuthMessage(
 			'Login con Google aún no está configurado. Agrega el Client ID en config.js.',
 			'error'
 		);
+		return false;
+	}
+	try {
+		await loadGoogleIdentityScript();
+	} catch {
+		showAuthMessage('No se pudo cargar Google. Revisa tu conexión e intenta de nuevo.', 'error');
 		return false;
 	}
 	if (typeof google === 'undefined' || !google.accounts?.id) {
@@ -2973,8 +3004,8 @@ function showGoogleOfficialButtonFallback() {
 	showAuthMessage('Usa el botón de Google que aparece abajo para continuar.', 'success');
 }
 
-function startGoogleSignIn() {
-	if (!ensureGoogleIdentityReady()) return;
+async function startGoogleSignIn() {
+	if (!(await ensureGoogleIdentityReady())) return;
 	try {
 		google.accounts.id.prompt((notification) => {
 			if (!notification) return;
@@ -3033,18 +3064,6 @@ function setupGoogleAuthButtons() {
 			startGoogleSignIn();
 		});
 	});
-
-	// Precargar initialize cuando el script de Google esté listo
-	const tryInit = () => {
-		if (getGoogleClientId() && typeof google !== 'undefined' && google.accounts?.id) {
-			ensureGoogleIdentityReady();
-		}
-	};
-	if (document.readyState === 'complete') {
-		setTimeout(tryInit, 400);
-	} else {
-		window.addEventListener('load', () => setTimeout(tryInit, 400));
-	}
 }
 
 if (document.readyState === 'loading') {
@@ -3479,47 +3498,67 @@ window.changeMainImage = function(imageSrc, index) {
 
 // Inicializar videos de reels de Instagram
 function initReelVideos() {
-  const reelVideos = document.querySelectorAll('.reel-video');
-  
-  reelVideos.forEach(video => {
+  const reelVideos = document.querySelectorAll('.reel-video[data-lazy-video], .reel-video');
+
+  reelVideos.forEach((video) => {
     const container = video.closest('.reel-video-container');
-    
-    // Reproducir video cuando está visible en viewport
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          video.play().catch(err => {
-            // Silenciar errores de autoplay (algunos navegadores bloquean autoplay)
-            console.log('Autoplay bloqueado:', err);
-          });
-        } else {
-          video.pause();
-        }
-      });
-    }, {
-      threshold: 0.5 // Reproducir cuando al menos 50% del video es visible
-    });
-    
+    if (!container) return;
+
+    const loadSource = () => {
+      const source = video.querySelector('source[data-src]');
+      if (source && !source.getAttribute('src')) {
+        source.setAttribute('src', source.dataset.src);
+        video.load();
+      }
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            loadSource();
+            video.play().catch(() => {});
+          } else {
+            video.pause();
+          }
+        });
+      },
+      { rootMargin: '200px 0px', threshold: 0.25 }
+    );
+
     observer.observe(video);
-    
-    // Reproducir al hacer hover
+
     container.addEventListener('mouseenter', () => {
-      video.play().catch(err => console.log('Error al reproducir:', err));
+      loadSource();
+      video.play().catch(() => {});
     });
-    
-    // Pausar al salir del hover (opcional)
-    container.addEventListener('mouseleave', () => {
-      // No pausamos para mantener la reproducción continua
-    });
-    
-    // Manejar errores de carga
-    video.addEventListener('error', (e) => {
-      console.warn('Error al cargar video:', video.src);
-      // Ocultar el contenedor si el video no se puede cargar
+
+    video.addEventListener('error', () => {
+      console.warn('Error al cargar video:', video.currentSrc || video.src);
       container.style.display = 'none';
     });
   });
 }
+
+/** Despierta el API de Render (plan free se duerme) en cuanto abre la página */
+function warmApiConnection() {
+  try {
+    const base = getElXolitoApiBaseForMain();
+    if (!base || base.includes('localhost')) return;
+    const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    const timer = setTimeout(() => ctrl?.abort(), 8000);
+    fetch(`${base}/health`, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: ctrl?.signal
+    }).catch(() => {}).finally(() => clearTimeout(timer));
+  } catch {
+    /* ignore */
+  }
+}
+
+warmApiConnection();
 
 // Inicializar cuando el DOM esté listo
 if (document.readyState === 'loading') {

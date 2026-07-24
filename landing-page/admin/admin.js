@@ -710,7 +710,7 @@
 
     grid.innerHTML = `<div class="cards-grid__inner">${voices.map((v) => `
       <article class="banner-card${!v.activo ? ' banner-card--draft' : ''}" data-id="${v.id}">
-        <img class="banner-card__img" src="${assetUrl(v.imagen || 'assets/Anillos/anillo.png')}" alt="" />
+        <img class="banner-card__img" src="${assetUrl(v.imagen || 'assets/Anillos/anillo.webp')}" alt="" />
         <div class="banner-card__body">
           <h4 class="banner-card__title">${esc(v.nombre)}</h4>
           <p class="banner-card__meta">${v.activo ? 'Activa' : 'Inactiva'} · Orden ${v.orden}${v.lugar ? ` · ${esc(v.lugar)}` : ''}</p>

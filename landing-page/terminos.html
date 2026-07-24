@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Términos y condiciones – El Xolito Mex</title>
+  <meta name="description" content="Términos y condiciones de uso de la tienda El Xolito Mex." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="El Xolito Mex">
+        <img src="assets/Logos/logo3.jpeg" alt="El Xolito Mex" class="brand-logo" />
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <ul class="nav-list">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="tienda">Tienda</a></li>
+          <li><a href="/#ofertas">Ofertas</a></li>
+          <li><a href="/#nosotros">Nosotros</a></li>
+          <li><a href="/#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="tienda" class="btn btn-outline" style="padding:0.45rem 0.9rem;font-size:0.75rem;">Ir a tienda</a>
+      </div>
+    </div>
+    <div class="border-mex"></div>
+  </header>
+
+  <main class="info-page">
+    <div class="container info-page__inner">
+      <p class="info-page__eyebrow">Legal</p>
+      <h1 class="info-page__title">Términos y condiciones</h1>
+      <p class="info-page__lead">Al usar el sitio y cotizar o comprar con El Xolito Mex, aceptas estos términos.</p>
+      <p class="info-page__updated">Última actualización: julio 2026</p>
+
+      <h2>1. Sobre el sitio</h2>
+      <p>Este sitio presenta el catálogo de joyería artesanal de El Xolito Mex. Los precios, existencias y descripciones pueden actualizarse sin previo aviso.</p>
+
+      <h2>2. Cuentas de usuario</h2>
+      <p>Eres responsable de cuidar tu correo y contraseña. Si usas inicio de sesión con Google, aplican también las condiciones de ese proveedor.</p>
+
+      <h2>3. Cotizaciones y pedidos</h2>
+      <p>Por ahora, las cotizaciones y compras se confirman principalmente por <strong>WhatsApp</strong>. Un pedido registrado en la web no implica pago automático hasta que se confirme el proceso con el equipo de El Xolito Mex.</p>
+
+      <h2>4. Productos</h2>
+      <ul>
+        <li>Las fotografías buscan representar fielmente cada pieza; puede haber ligeras variaciones propias de lo hecho a mano.</li>
+        <li>La disponibilidad depende del inventario al momento de confirmar.</li>
+      </ul>
+
+      <h2>5. Envíos y cambios</h2>
+      <p>Los tiempos, costos de envío y políticas de cambio o devolución se confirman al momento de la compra. Si tienes un caso particular, escríbenos a <a href="mailto:hola@elxolitomex.com">hola@elxolitomex.com</a>.</p>
+
+      <h2>6. Propiedad intelectual</h2>
+      <p>Logos, textos, fotografías y diseño del sitio pertenecen a El Xolito Mex o a sus legítimos titulares. No está permitido copiarlos para uso comercial sin autorización.</p>
+
+      <h2>7. Contacto</h2>
+      <p>Para dudas sobre estos términos: <a href="mailto:hola@elxolitomex.com">hola@elxolitomex.com</a>.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="border-mex"></div>
+    <div class="container footer-content">
+      <div class="footer-bottom">
+        <p class="foot-note">© <span id="year"></span> El Xolito Mex. Todos los derechos reservados.</p>
+        <div class="footer-legal">
+          <a href="terminos">Términos y condiciones</a>
+          <a href="aviso-privacidad">Aviso de privacidad</a>
+        </div>
+      </div>
+      <p class="footer-credit">
+        Desarrollado por
+        <a href="https://valency12.github.io/Mi-portafolio/" target="_blank" rel="noopener noreferrer">Valency Design</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const btn = document.querySelector('.nav-toggle');
+    const list = document.querySelector('.nav-list');
+    if (btn && list) {
+      btn.addEventListener('click', () => {
+        const open = list.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    }
+  </script>
+</body>
+</html>

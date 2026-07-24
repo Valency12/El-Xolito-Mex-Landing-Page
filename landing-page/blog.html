@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog – El Xolito Mex</title>
+  <meta name="description" content="Historias, cuidado de joyas e inspiración desde el taller de El Xolito Mex." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="El Xolito Mex">
+        <img src="assets/Logos/logo3.jpeg" alt="El Xolito Mex" class="brand-logo" />
+      </a>
+      <nav class="nav" aria-label="Principal">
+        <button class="nav-toggle" aria-label="Abrir menú" aria-expanded="false">☰</button>
+        <ul class="nav-list">
+          <li><a href="/">Inicio</a></li>
+          <li><a href="tienda">Tienda</a></li>
+          <li><a href="/#ofertas">Ofertas</a></li>
+          <li><a href="/#nosotros">Nosotros</a></li>
+          <li><a href="/#contacto">Contacto</a></li>
+        </ul>
+      </nav>
+      <div class="header-actions">
+        <a href="tienda" class="btn btn-outline" style="padding:0.45rem 0.9rem;font-size:0.75rem;">Ir a tienda</a>
+      </div>
+    </div>
+    <div class="border-mex"></div>
+  </header>
+
+  <main class="info-page">
+    <div class="container info-page__inner">
+      <p class="info-page__eyebrow">Historias</p>
+      <h1 class="info-page__title">Blog</h1>
+      <p class="info-page__lead">Notas desde el taller: materiales, cuidado de piezas e inspiración mexicana.</p>
+
+      <div class="info-blog-list">
+        <a class="info-blog-card" href="cuidado-joyas">
+          <p class="info-blog-card__meta">Cuidado · Guía</p>
+          <h2>Cómo cuidar tu plata día a día</h2>
+          <p>Hábitos simples para que tu pieza conserve el brillo y te acompañe más tiempo.</p>
+        </a>
+        <a class="info-blog-card" href="/#historia">
+          <p class="info-blog-card__meta">Marca · Origen</p>
+          <h2>De un taller a cada rincón</h2>
+          <p>La historia detrás de El Xolito Mex y la visión de llevar joyería con alma.</p>
+        </a>
+        <a class="info-blog-card" href="/#taller">
+          <p class="info-blog-card__meta">Taller · Oficio</p>
+          <h2>Donde la idea se vuelve metal</h2>
+          <p>Un vistazo al proceso artesanal: aprendizaje, maestría y detalle en cada pieza.</p>
+        </a>
+      </div>
+
+      <div class="info-page__cta">
+        <p>Pronto publicaremos más notas. Mientras tanto, explora la <a href="tienda">tienda</a> o síguenos en <a href="https://www.instagram.com/elxolitomex_/" target="_blank" rel="noopener noreferrer">Instagram</a>.</p>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="border-mex"></div>
+    <div class="container footer-content">
+      <div class="footer-bottom">
+        <p class="foot-note">© <span id="year"></span> El Xolito Mex. Todos los derechos reservados.</p>
+        <div class="footer-legal">
+          <a href="terminos">Términos y condiciones</a>
+          <a href="aviso-privacidad">Aviso de privacidad</a>
+        </div>
+      </div>
+      <p class="footer-credit">
+        Desarrollado por
+        <a href="https://valency12.github.io/Mi-portafolio/" target="_blank" rel="noopener noreferrer">Valency Design</a>
+      </p>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+    const btn = document.querySelector('.nav-toggle');
+    const list = document.querySelector('.nav-list');
+    if (btn && list) {
+      btn.addEventListener('click', () => {
+        const open = list.classList.toggle('is-open');
+        btn.setAttribute('aria-expanded', String(open));
+      });
+    }
+  </script>
+</body>
+</html>
